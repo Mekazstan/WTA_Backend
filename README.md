@@ -54,33 +54,61 @@ This repository contains the backend implementation for the Water Tanker Availab
 
 The backend exposes the following API endpoints:
 
-### Customer API Endpoints
+###  Customer Authentication:
 
-* `POST /api/customers/register`: Register a new customer.
-* `POST /api/customers/login`: Log in an existing customer.
-* `GET /api/customers/profile`: Get the logged-in customer's profile (requires authentication).
-* `PUT /api/customers/profile`: Update the logged-in customer's profile (requires authentication).
-* `POST /api/orders`: Place a new water tanker order (requires authentication).
-* `GET /api/customers/orders`: Get the order history for the logged-in customer (requires authentication).
-* `POST /api/orders/{order_id}/feedback`: Submit feedback and rating for a completed order (requires authentication).
+* `POST /api/customers/register`: For new customer registration.
+* `POST /api/customers/login`: For customer login and session management (e.g., using JWT).
 
-### Admin API Endpoints
+### Customer Profile Management:
 
-* `POST /api/admin/login`: Log in as an administrator.
-* `GET /api/admin/customers`: Get a list of all customers (requires authentication).
-* `GET /api/admin/customers/{customer_id}`: Get details of a specific customer (requires authentication).
-* `PUT /api/admin/customers/{customer_id}`: Update customer details (requires authentication).
-* `GET /api/admin/drivers`: Get a list of all drivers (requires authentication).
-* `GET /api/admin/drivers/{driver_id}`: Get details of a specific driver (requires authentication).
-* `POST /api/admin/drivers`: Add a new driver (requires authentication).
-* `PUT /api/admin/drivers/{driver_id}`: Update driver information (requires authentication).
-* `GET /api/admin/orders`: Get a list of all orders (requires authentication).
-* `GET /api/admin/orders/{order_id}`: Get details of a specific order (requires authentication).
-* `PUT /api/admin/orders/{order_id}/assign`: Manually assign an order to a driver (requires authentication).
-* `PUT /api/admin/orders/{order_id}/status`: Manually update the delivery status of an order (requires authentication).
-* `GET /api/admin/reports/orders`: Generate reports on order statistics (requires authentication).
-* `GET /api/admin/reports/revenue`: Generate revenue reports (requires authentication).
-* `GET /api/admin/reports/feedback`: Get feedback trends (requires authentication).
+* `GET /api/customers/profile`: To retrieve customer profile details.
+* `PUT /api/customers/profile`: To update customer profile details.
+
+### Order Management (Customer Side):
+
+* `POST /api/orders`: To place a new order.
+* `GET /api/customers/orders`: To retrieve a customer's order history.
+
+### Payment Integration:
+
+Endpoints to initiate and verify payments with the chosen payment gateway. This will likely involve interacting with a third-party API.
+
+### Feedback and Ratings:
+
+* `POST /api/orders/{order_id}/feedback`: To submit feedback and a rating for a completed order.
+
+###  Admin Authentication:
+
+* `POST /api/admin/login`: For admin login and session management.
+
+### Admin User Management:
+
+* `GET /api/admin/customers`: To list all customers (with optional filtering/pagination).
+* `GET /api/admin/customers/{customer_id}`: To retrieve details of a specific customer.
+* `POST /api/admin/customers`: To add a new customer (if needed).
+* `PUT /api/admin/customers/{customer_id}`: To update customer details.
+* `DELETE /api/admin/customers/{customer_id}`: To deactivate a customer account.
+
+### Admin Driver Management:
+
+* `GET /api/admin/drivers`: To list all drivers (with optional filtering).
+* `GET /api/admin/drivers/{driver_id}`: To retrieve details of a specific driver.
+* `POST /api/admin/drivers`: To add a new driver.
+* `PUT /api/admin/drivers/{driver_id}`: To update driver information.
+* `DELETE /api/admin/drivers/{driver_id}`: To deactivate a driver.
+
+### Admin Order Management:
+
+* `GET /api/admin/orders`: To list all orders (with filtering options based on status, date, etc.).
+* `GET /api/admin/orders/{order_id}`: To retrieve details of a specific order.
+* `PUT /api/admin/orders/{order_id}/assign`: To manually assign an order to a driver (requires driver_id in the request).
+* `PUT /api/admin/orders/{order_id}/status`: To manually update the delivery status of an order.
+
+### Admin Reporting:
+
+* `GET /api/admin/reports/orders`: To generate reports on order statistics (e.g., total orders, completed orders).
+* `GET /api/admin/reports/revenue`: To generate revenue reports (based on completed payments).
+* `GET /api/admin/reports/feedback`: To retrieve feedback trends.
 
 
 ## Data Models

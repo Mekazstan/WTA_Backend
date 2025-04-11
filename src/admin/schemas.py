@@ -13,18 +13,6 @@ class AdminUserBase(BaseModel):
 class AdminUserCreate(AdminUserBase):
     pass
 
-class AdminUserResponse(AdminUserBase):
-    admin_id: UUID
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-class AdminUserLogin(BaseModel):
-    username: str = Field(..., example="adminuser")
-    password: str = Field(..., example="adminpassword")
-    
-    class Config:
-        from_attributes = True
-
+class AdminUserLogin(AdminUserBase):
+    pass
 

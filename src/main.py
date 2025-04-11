@@ -1,7 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from auth.routes import auth_router
+from admin.routes import admin_router
+from customer.routes import customer_router
+from driver.routes import driver_router
+from feedback.routes import feedback_router
+from order.routes import order_router
+from payment.routes import payment_router
+from report.routes import report_router
 from db.main import init_db
 from db.mongo import initialize_blocklist
 
@@ -31,7 +37,13 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
-app.include_router(auth_router, prefix=f"/api/auth", tags=['auth'])
+app.include_router(customer_router, prefix="/api/customers", tags=["Customers"])
+app.include_router(driver_router, prefix="/api/drivers", tags=["Drivers"])
+app.include_router(order_router, prefix="/api/orders", tags=["Orders"])
+app.include_router(payment_router, prefix="/api/payments", tags=["Payments"])
+app.include_router(feedback_router, prefix="/api/feedback", tags=["Feedback"])
+app.include_router(admin_router, prefix="/api/admin", tags=["Admin"])
+app.include_router(report_router, prefix="/api/reports", tags=["Reports"])
 
 
 @app.get("/")

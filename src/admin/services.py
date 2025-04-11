@@ -7,8 +7,8 @@ from schemas import AdminUserCreate
 
 class AdminService:
     
-    async def get_admin_user_by_username(self, session: AsyncSession, username: str) -> AdminUser | None:
-        result = await session.execute(select(AdminUser).where(AdminUser.username == username))
+    async def get_admin_user_by_email(self, session: AsyncSession, email: str) -> AdminUser | None:
+        result = await session.execute(select(AdminUser).where(AdminUser.email == email))
         return result.scalar_one_or_none()
 
     async def create_admin_user(self, session: AsyncSession, admin_user: AdminUserCreate) -> AdminUser:

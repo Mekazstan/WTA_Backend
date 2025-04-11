@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 import uuid
 from typing import List, Optional
-from datetime import timedelta
+from datetime import timedelta, datetime
 from .schemas import AdminUserLogin, AdminUserCreate
 from .services import AdminService
 from customer.services import CustomerService
@@ -13,7 +13,9 @@ from driver.schemas import DriverResponse, DriverCreate, DriverUpdate
 from order.services import OrderService
 from order.schemas import OrderResponse, OrderAssign, OrderUpdate, OrderStatusUpdate
 from db.main import get_session
+from db.mongo import add_jti_to_blocklist
 from auth.utils import create_access_tokens, verify_password
+from auth.dependencies import RefreshTokenBearer, AccessTokenBearer
 
 REFRESH_TOKEN_EXPIRY = 2
 admin_router = APIRouter()
@@ -64,14 +66,14 @@ async def login_admin(
 
             if password_valid:
                 access_token = create_access_tokens(
-                    admin_data={
+                    user_data={
                         "email": admin_user.email,
                         "admin_id": str(admin_user.admin_id)
                     }
                 )
 
                 refresh_token = create_access_tokens(
-                    admin_data={
+                    user_data={
                         "email": admin_user.email,
                         "admin_id": str(admin_user.admin_id)
                     },
@@ -83,7 +85,7 @@ async def login_admin(
                         "message": "Login Successful",
                         "access token": access_token,
                         "refresh token": refresh_token,
-                        "user": {
+                        "admin_user": {
                             "email": admin_user.email,
                             "uid": str(admin_user.admin_id),
                             "username": admin_user.username,
@@ -99,6 +101,32 @@ async def login_admin(
     finally:
         await session.close()
 
+
+@admin_router.get("/refresh_token")
+async def get_new_access_token(token_details: dict = Depends(RefreshTokenBearer())):
+    try:
+        expiry_timestamp = token_details['exp']
+        if datetime.fromtimestamp(expiry_timestamp) > datetime.now():
+            new_access_token = create_access_tokens(user_data=token_details['user'])
+            return JSONResponse(content={"access_token": new_access_token})
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or Expired Token"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+
+
+@admin_router.get("/logout")
+async def revoke_token(token_details: dict = Depends(AccessTokenBearer())):
+    jti = token_details["jti"]
+    await add_jti_to_blocklist(jti)
+
+    return JSONResponse(
+        content={"message": "Logged out Successfully"},
+        status_code=status.HTTP_200_OK,
+    )
 
 # --- Admin User Management ---
 @admin_router.get("/customers", response_model=List[CustomerResponse])

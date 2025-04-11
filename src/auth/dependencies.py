@@ -5,14 +5,16 @@ from fastapi.security.http import HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.mongo import token_in_blocklist
 from src.db.main import get_session
-from src.db.models import User
+from src.db.models import Customer
 from .utils import decode_token
-from .service import UserService
+from src.customer.services import CustomerService
+from src.driver.services import DriverService
 from typing import Any, List, Union
 
 
 
-user_service = UserService()
+customer_service = CustomerService()
+driver_service = DriverService()
 
 
 class TokenBearer(HTTPBearer):
@@ -48,25 +50,23 @@ class RefreshTokenBearer(TokenBearer):
         if token_data and not token_data["refresh"]:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Please provide a valid refresh token")
             
-async def get_current_user(
+async def get_current_customer(
     token_details: dict = Depends(AccessTokenBearer()),
     session: AsyncSession = Depends(get_session),
 ):
-    user_email = token_details["user"]["email"]
+    customer_email = token_details["user"]["email"]
 
-    user = await user_service.get_user_by_email(user_email, session)
+    customer = await customer_service.get_customer_by_email(customer_email, session)
 
-    return user
+    return customer
 
 
-class RoleChecker:
-    def __init__(self, allowed_roles: List[str]) -> None:
-        self.allowed_roles = allowed_roles
-        
-    def __call__(self, current_user: User = Depends(get_current_user)) -> Any:
-        if not current_user.is_verified:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account Not verified")
-        if current_user.role in self.allowed_roles:
-            return True
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, 
-                            detail="You do not have enough permissions to perform this action")
+async def get_current_driver(
+    token_details: dict = Depends(AccessTokenBearer()),
+    session: AsyncSession = Depends(get_session),
+):
+    driver_id = token_details["user"]["driver_id"]
+
+    driver = await driver_service.get_driver_by_id(driver_id, session)
+
+    return driver

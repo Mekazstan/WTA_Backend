@@ -24,12 +24,12 @@ order_service = OrderService()
 
 # --- Admin Authentication ---
 @admin_router.post("/signup", status_code=status.HTTP_201_CREATED)
-async def create_user_account(
-    admin_login_data: AdminUserCreate,
+async def create_admin_account(
+    admin_create_data: AdminUserCreate,
     session: AsyncSession = Depends(get_session)
 ):
     try:
-        email = admin_login_data.email
+        email = admin_create_data.email
         admin_exists = await admin_service.get_admin_user_by_email(email, session)
         if admin_exists:
             raise HTTPException(
@@ -37,7 +37,7 @@ async def create_user_account(
                 detail=f"An Admin with email {email} already exists.",
             )
 
-        new_admin = await admin_service.create_admin_user(admin_login_data, session)
+        new_admin = await admin_service.create_admin_user(admin_create_data, session)
 
         return {
             "message": "Admin Account Created.",
@@ -98,7 +98,6 @@ async def login_admin(
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         await session.close()
-
 
 
 # --- Admin User Management ---

@@ -3,7 +3,8 @@ from sqlalchemy import update, delete, select
 from uuid import UUID
 from typing import List
 from src.db.models import Driver
-from schemas import DriverCreate, DriverUpdate 
+from schemas import DriverCreate, DriverUpdate
+from src.auth.utils import generate_password_hash
 
 class DriverService:
 
@@ -15,12 +16,14 @@ class DriverService:
         result = await db.execute(select(Driver).where(Driver.contact_number == contact_number))
         return result.scalar_one_or_none()
 
-    async def create_driver(self, db: AsyncSession, driver: DriverCreate) -> Driver:
+    async def create_driver(db: AsyncSession, driver: DriverCreate) -> Driver:
+        hashed_password = generate_password_hash(driver.password)
         db_driver = Driver(
             name=driver.name,
             contact_number=driver.contact_number,
             vehicle_details=driver.vehicle_details,
-            verification_status=driver.verification_status
+            verification_status=driver.verification_status,
+            password_hash=hashed_password,
         )
         db.add(db_driver)
         await db.commit()

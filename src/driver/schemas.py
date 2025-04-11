@@ -13,7 +13,17 @@ class DriverBase(BaseModel):
         from_attributes = True
 
 class DriverCreate(DriverBase):
-    pass
+    password: str = Field(..., min_length=6, example="driverpassword")
+    
+    class Config:
+        from_attributes = True
+
+class DriverLogin(BaseModel):
+    contact_number: str = Field(..., example="+9876543210")
+    password: str = Field(..., example="driverpassword")
+    
+    class Config:
+        from_attributes = True
 
 class DriverUpdate(DriverBase):
     name: Optional[str] = Field(None, example="Updated Driver Name")

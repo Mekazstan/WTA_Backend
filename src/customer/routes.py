@@ -1,53 +1,110 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+from src.db.main import get_session
+from src.db.models import Customer
+from auth.utils import create_access_tokens, verify_password
+from src.order.schemas import OrderResponse
+from src.order.services import OrderService
+from .services import CustomerService
+from .schemas import CustomerCreate, CustomerResponse, CustomerLogin, CustomerUpdate
 from typing import List
-
-from . import schemas, services, models
-from database import get_db
-from .utils import hash_password, verify_password, create_access_token
-from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
+from src.auth.dependencies import get_current_customer
 
+REFRESH_TOKEN_EXPIRY = 2
 customer_router = APIRouter()
-
-# --- Utility Functions ---
-async def get_current_customer(db: AsyncSession = Depends(get_db), token: str = Depends(OAuth2PasswordRequestForm)):
-    # In a real application, you'd validate the token and retrieve the customer
-    # This is a placeholder for authentication
-    customer = await services.get_customer_by_email(db, token.username)
-    if not customer or not verify_password(token.password, customer.password_hash):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-    return customer
+customer_service = CustomerService()
+order_service = OrderService()
 
 # --- Customer Authentication ---
-@customer_router.post("/register", response_model=schemas.CustomerResponse, status_code=status.HTTP_201_CREATED)
-async def register_customer(customer: schemas.CustomerCreate, db: AsyncSession = Depends(get_db)):
-    db_customer = await services.get_customer_by_email(db, customer.email)
-    if db_customer:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
-    return await services.create_customer(db, customer)
 
-@customer_router.post("/login", response_model=schemas.TokenResponse)
-async def login_customer(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
-    customer = await services.get_customer_by_email(db, form_data.username)
-    if not customer or not verify_password(form_data.password, customer.password_hash):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
-    access_token_expires = timedelta(minutes=30) # Adjust as needed
-    access_token = create_access_token(data={"sub": customer.email}, expires_delta=access_token_expires)
-    return {"access_token": access_token, "token_type": "bearer"}
+@customer_router.post("/signup", response_model=CustomerResponse, status_code=status.HTTP_201_CREATED)
+async def create_customer_account(
+    customer_create_data: CustomerCreate,
+    session: AsyncSession = Depends(get_session)
+):
+    try:
+        email = customer_create_data.email
+        customer_exists = await customer_service.get_customer_by_email(email, session)
+        if customer_exists:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"A customer with email {email} already exists.",
+            )
+
+        new_customer = await customer_service.create_customer(customer_create_data, session)
+
+        return {
+            "message": "Customer Account Created.",
+            "new_customer": new_customer,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        await session.close()
+
+
+@customer_router.post("/login", status_code=status.HTTP_200_OK)
+async def login_customer(
+    customer_login_data: CustomerLogin, session: AsyncSession = Depends(get_session)
+):
+    try:
+        email = customer_login_data.email
+        password = customer_login_data.password
+
+        customer_account = await customer_service.get_customer_by_email(email, session)
+        if customer_account is not None:
+            password_valid = verify_password(password, customer_account.password_hash)
+
+            if password_valid:
+                access_token = create_access_tokens(
+                    admin_data={
+                        "email": customer_account.email,
+                        "customer_id": str(customer_account.customer_id)
+                    }
+                )
+
+                refresh_token = create_access_tokens(
+                    admin_data={
+                        "email": customer_account.email,
+                        "customer_id": str(customer_account.customer_id)
+                    },
+                    refresh=True,
+                    expiry=timedelta(days=REFRESH_TOKEN_EXPIRY),
+                )
+                return JSONResponse(
+                    content={
+                        "message": "Login Successful",
+                        "access token": access_token,
+                        "refresh token": refresh_token,
+                        "user": {
+                            "email": customer_account.email,
+                            "customer_id": str(customer_account.customer_id)
+                        },
+                    }
+                )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid Email or Password",
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        await session.close()
 
 # --- Customer Profile Management ---
-@customer_router.get("/profile", response_model=schemas.CustomerResponse)
-async def get_customer_profile(current_customer: models.Customer = Depends(get_current_customer)):
+@customer_router.get("/profile", response_model=CustomerResponse)
+async def get_customer_profile(current_customer: Customer = Depends(get_current_customer)):
     return current_customer
 
-@customer_router.put("/profile", response_model=schemas.CustomerResponse)
-async def update_customer_profile(customer_update: schemas.CustomerUpdate, current_customer: models.Customer = Depends(get_current_customer), db: AsyncSession = Depends(get_db)):
-    updated_customer = await services.update_customer(db, current_customer.customer_id, customer_update)
+@customer_router.put("/profile", response_model=CustomerResponse)
+async def update_customer_profile(customer_update: CustomerUpdate, current_customer: Customer = Depends(get_current_customer), session: AsyncSession = Depends(get_session)):
+    updated_customer = await customer_service.update_customer(session, current_customer.customer_id, customer_update)
     if not updated_customer:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
     return updated_customer
 
-@customer_router.get("/orders", response_model=List[schemas.OrderResponse])
-async def get_customer_order_history(current_customer: models.Customer = Depends(get_current_customer), db: AsyncSession = Depends(get_db), skip: int = 0, limit: int = 100):
-    return await services.list_customer_orders(db, current_customer.customer_id, skip=skip, limit=limit)
+@customer_router.get("/orders", response_model=List[OrderResponse])
+async def get_customer_order_history(current_customer: Customer = Depends(get_current_customer), session: AsyncSession = Depends(get_session), skip: int = 0, limit: int = 100):
+    return await order_service.list_customer_orders(session, current_customer.customer_id, skip=skip, limit=limit)

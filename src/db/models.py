@@ -30,7 +30,8 @@ class Driver(Base):
     verification_status = Column(String(50), default="Pending")
     registration_date = Column(DateTime(timezone=True), default=func.now())
     is_active = Column(Boolean, default=True)
-
+    password_hash = Column(String(255))
+    
     orders = relationship("Order", back_populates="assigned_driver")
 
 class Order(Base):

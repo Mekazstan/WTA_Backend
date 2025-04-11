@@ -64,7 +64,7 @@ The backend exposes the following API endpoints:
 ### Customer Profile Management:
 
 * `GET /api/customers/profile`: To retrieve customer profile details (requires authentication).
-* `PUT /api/customers/profile`: To update customer profile details (requires authentication).
+* `PATCH /api/customers/profile`: To update customer profile details (requires authentication).
 * `GET /api/customers/orders`: To retrieve the logged-in customer's order history (requires authentication).
 
 ### Order Management (Customer Side):
@@ -91,7 +91,7 @@ The backend exposes the following API endpoints:
 ### Driver Profile Management:
 
 * `GET /api/drivers/profile`: To retrieve driver profile details (requires driver authentication).
-* `PUT /api/drivers/profile`: To update driver profile details (requires driver authentication).
+* `PATCH /api/drivers/profile`: To update driver profile details (requires driver authentication).
 
 ### Admin Authentication:
 
@@ -105,7 +105,7 @@ The backend exposes the following API endpoints:
 * `GET /api/admin/customers`: To list all customers (requires admin authentication).
 * `GET /api/admin/customers/{customer_id}`: To retrieve details of a specific customer (requires admin authentication).
 * `POST /api/admin/customers`: To add a new customer (requires admin authentication).
-* `PUT /api/admin/customers/{customer_id}`: To update customer details (requires admin authentication).
+* `PATCH /api/admin/customers/{customer_id}`: To update customer details (requires admin authentication).
 * `DELETE /api/admin/customers/{customer_id}`: To deactivate a customer account (requires admin authentication).
 
 ### Admin Driver Management:
@@ -113,15 +113,15 @@ The backend exposes the following API endpoints:
 * `GET /api/admin/drivers`: To list all drivers (requires admin authentication).
 * `GET /api/admin/drivers/{driver_id}`: To retrieve details of a specific driver (requires admin authentication).
 * `POST /api/admin/drivers`: To add a new driver (requires admin authentication).
-* `PUT /api/admin/drivers/{driver_id}`: To update driver information (requires admin authentication).
+* `PATCH /api/admin/drivers/{driver_id}`: To update driver information (requires admin authentication).
 * `DELETE /api/admin/drivers/{driver_id}`: To deactivate a driver (requires admin authentication).
 
 ### Admin Order Management:
 
 * `GET /api/admin/orders`: To list all orders (requires admin authentication).
 * `GET /api/admin/orders/{order_id}`: To retrieve details of a specific order (requires admin authentication).
-* `PUT /api/admin/orders/{order_id}/assign`: To manually assign an order to a driver (requires admin authentication).
-* `PUT /api/admin/orders/{order_id}/status`: To manually update the delivery status of an order (requires admin authentication).
+* `PATCH /api/admin/orders/{order_id}/assign`: To manually assign an order to a driver (requires admin authentication).
+* `PATCH /api/admin/orders/{order_id}/status`: To manually update the delivery status of an order (requires admin authentication).
 
 ### Admin Reporting:
 

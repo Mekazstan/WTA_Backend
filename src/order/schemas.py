@@ -5,8 +5,7 @@ from uuid import UUID
 
 class OrderBase(BaseModel):
     quantity: float = Field(..., example=5000.0)
-    location_latitude: float = Field(..., example=37.7749)
-    location_longitude: float = Field(..., example=-122.4194)
+    location_address: str
     delivery_schedule: datetime = Field(..., example="2025-04-15T10:00:00")
     payment_method: Optional[str] = Field(None, example="Card")
     
@@ -24,6 +23,7 @@ class OrderUpdate(OrderBase):
     delivery_status: Optional[str] = Field(None, example="On the way", description="Pending, Assigned, On the way, Delivered, Cancelled")
     assigned_driver_id: Optional[UUID] = Field(None, example="some-driver-uuid")
     payment_status: Optional[str] = Field(None, example="Paid", description="Pending, Paid, Failed")
+    cancellation_reason: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -35,6 +35,7 @@ class OrderResponse(OrderBase):
     delivery_status: str
     assigned_driver_id: Optional[UUID]
     payment_status: Optional[str]
+    cancellation_reason: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
@@ -52,4 +53,9 @@ class OrderStatusUpdate(BaseModel):
     
     class Config:
         from_attributes = True
-        
+
+class OrderCancellationRequest(BaseModel):
+    reason: Optional[str] = None
+    
+    class Config:
+        from_attributes = True

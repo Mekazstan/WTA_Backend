@@ -21,9 +21,10 @@ class DriverService:
         db_driver = Driver(
             name=driver.name,
             contact_number=driver.contact_number,
-            vehicle_details=driver.vehicle_details,
+            vehicle_details=driver.vehicle_details.model_dump_json(),
             verification_status=driver.verification_status,
             password_hash=hashed_password,
+            price_per_liter=driver.price_per_liter
         )
         db.add(db_driver)
         await db.commit()

@@ -1,5 +1,6 @@
 import uuid
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Numeric, Text, Boolean
+from sqlalchemy import (Column, Integer, String, DateTime, ForeignKey, 
+                        Numeric, Text, Boolean, Float)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import UUID
@@ -29,6 +30,7 @@ class Driver(Base):
     vehicle_details = Column(Text)
     verification_status = Column(String(50), default="Pending")
     registration_date = Column(DateTime(timezone=True), default=func.now())
+    price_per_liter = Column(Float, default=20.0)
     is_active = Column(Boolean, default=True)
     password_hash = Column(String(255))
     
@@ -40,14 +42,14 @@ class Order(Base):
     order_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.customer_id"), nullable=False)
     quantity = Column(Numeric, nullable=False)
-    location_latitude = Column(Numeric)
-    location_longitude = Column(Numeric)
+    location_address = Column(String(200))
     delivery_schedule = Column(DateTime(timezone=True), nullable=False)
     order_date = Column(DateTime(timezone=True), default=func.now())
     delivery_status = Column(String(50), default="Pending")
     assigned_driver_id = Column(UUID(as_uuid=True), ForeignKey("drivers.driver_id"), nullable=True)
     payment_status = Column(String(50), default="Pending")
     payment_method = Column(String(50))
+    cancellation_reason = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

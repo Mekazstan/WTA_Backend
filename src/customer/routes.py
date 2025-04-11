@@ -127,7 +127,7 @@ async def revoke_token(token_details: dict = Depends(AccessTokenBearer())):
 async def get_customer_profile(current_customer: Customer = Depends(get_current_customer)):
     return current_customer
 
-@customer_router.put("/profile", response_model=CustomerResponse)
+@customer_router.patch("/profile", response_model=CustomerResponse)
 async def update_customer_profile(customer_update: CustomerUpdate, current_customer: Customer = Depends(get_current_customer), session: AsyncSession = Depends(get_session)):
     updated_customer = await customer_service.update_customer(session, current_customer.customer_id, customer_update)
     if not updated_customer:

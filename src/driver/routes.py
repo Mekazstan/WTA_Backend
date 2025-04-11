@@ -113,7 +113,7 @@ async def revoke_token(token_details: dict = Depends(AccessTokenBearer())):
 async def get_driver_profile(current_driver: Driver = Depends(get_current_driver)):
     return current_driver
 
-@driver_router.put("/profile", response_model=DriverResponse)
+@driver_router.patch("/profile", response_model=DriverResponse)
 async def update_driver_profile(driver_update: DriverUpdate, current_driver: Driver = Depends(get_current_driver), db: AsyncSession = Depends(get_session)):
     updated_driver = await driver_service.update_driver(db, current_driver.driver_id, driver_update)
     if not updated_driver:

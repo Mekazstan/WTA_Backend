@@ -147,7 +147,7 @@ async def add_new_customer_by_admin(customer: CustomerCreate, session: AsyncSess
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
     return await customer_service.create_customer(session, customer)
 
-@admin_router.put("/customers/{customer_id}", response_model=CustomerResponse)
+@admin_router.patch("/customers/{customer_id}", response_model=CustomerResponse)
 async def update_customer_by_admin(customer_id: uuid.UUID, customer_update: CustomerUpdate, session: AsyncSession = Depends(get_session)):
     updated_customer = await customer_service.update_customer(session, customer_id, customer_update)
     if not updated_customer:
@@ -180,7 +180,7 @@ async def add_new_driver_by_admin(driver: DriverCreate, session: AsyncSession = 
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Driver with this contact number already exists")
     return await driver_service.create_driver(session, driver)
 
-@admin_router.put("/drivers/{driver_id}", response_model=DriverResponse)
+@admin_router.patch("/drivers/{driver_id}", response_model=DriverResponse)
 async def update_driver_by_admin(driver_id: uuid.UUID, driver_update: DriverUpdate, session: AsyncSession = Depends(get_session)):
     updated_driver = await driver_service.update_driver(session, driver_id, driver_update)
     if not updated_driver:
@@ -206,7 +206,7 @@ async def get_order_by_admin(order_id: uuid.UUID, session: AsyncSession = Depend
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
     return order
 
-@admin_router.put("/orders/{order_id}/assign", response_model=OrderResponse)
+@admin_router.patch("/orders/{order_id}/assign", response_model=OrderResponse)
 async def assign_order_to_driver(order_id: uuid.UUID, order_assign: OrderAssign, session: AsyncSession = Depends(get_session)):
     db_order = await order_service.get_order(session, order_id)
     db_driver = await order_service.get_driver_by_id(session, order_assign.driver_id)
@@ -217,7 +217,7 @@ async def assign_order_to_driver(order_id: uuid.UUID, order_assign: OrderAssign,
     updated_order = await order_service.update_order(session, order_id, OrderUpdate(assigned_driver_id=order_assign.driver_id, delivery_status="Assigned"))
     return updated_order
 
-@admin_router.put("/orders/{order_id}/status", response_model=OrderResponse)
+@admin_router.patch("/orders/{order_id}/status", response_model=OrderResponse)
 async def update_order_delivery_status(order_id: uuid.UUID, status_update: OrderStatusUpdate, session: AsyncSession = Depends(get_session)):
     db_order = await order_service.get_order(session, order_id)
     if not db_order:

@@ -11,7 +11,7 @@ Base = declarative_base()
 # Create the async engine
 engine = create_async_engine(
     DATABASE_URL,
-    echo=True,
+    echo=False,
     future=True,
     pool_size=20,
     max_overflow=20,

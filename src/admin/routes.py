@@ -32,14 +32,14 @@ async def create_admin_account(
 ):
     try:
         email = admin_create_data.email
-        admin_exists = await admin_service.get_admin_user_by_email(email, session)
+        admin_exists = await admin_service.get_admin_user_by_email(session, email)
         if admin_exists:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"An Admin with email {email} already exists.",
             )
 
-        new_admin = await admin_service.create_admin_user(admin_create_data, session)
+        new_admin = await admin_service.create_admin_user(session, admin_create_data)
 
         return {
             "message": "Admin Account Created.",
@@ -60,7 +60,7 @@ async def login_admin(
         username = admin_login_data.username
         password = admin_login_data.password
 
-        admin_user = await admin_service.get_admin_user_by_email(email, session)
+        admin_user = await admin_service.get_admin_user_by_email(session, email)
         if admin_user is not None:
             password_valid = verify_password(password, admin_user.password_hash)
 

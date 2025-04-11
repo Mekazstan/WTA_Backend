@@ -16,13 +16,13 @@ driver_service = DriverService()
 
 # --- Customer Authentication ---
 
-@driver_router.post("/signup", response_model=DriverResponse, status_code=status.HTTP_201_CREATED)
+@driver_router.post("/signup", status_code=status.HTTP_201_CREATED)
 async def create_driver_account(
     driver_create_data: DriverCreate,
     session: AsyncSession = Depends(get_session)
 ):
     try:
-        new_driver = await driver_service.create_driver(driver_create_data, session)
+        new_driver = await driver_service.create_driver(session, driver_create_data)
 
         return {
             "message": "Customer Account Created.",
@@ -35,14 +35,14 @@ async def create_driver_account(
 
 
 @driver_router.post("/login", status_code=status.HTTP_200_OK)
-async def login_customer(
+async def login_driver(
     driver_login_data: DriverLogin, session: AsyncSession = Depends(get_session)
 ):
     try:
         contact_number = driver_login_data.contact_number
         password = driver_login_data.password
 
-        driver_account = await driver_service.get_driver_by_contact(contact_number, session)
+        driver_account = await driver_service.get_driver_by_contact(session, contact_number)
         if driver_account is not None:
             password_valid = verify_password(password, driver_account.password_hash)
 
@@ -109,11 +109,11 @@ async def revoke_token(token_details: dict = Depends(AccessTokenBearer())):
     )
 
 # --- Driver Profile Management ---
-@driver_router.get("/profile", response_model=DriverResponse)
+@driver_router.get("/profile")
 async def get_driver_profile(current_driver: Driver = Depends(get_current_driver)):
     return current_driver
 
-@driver_router.patch("/profile", response_model=DriverResponse)
+@driver_router.patch("/profile")
 async def update_driver_profile(driver_update: DriverUpdate, current_driver: Driver = Depends(get_current_driver), db: AsyncSession = Depends(get_session)):
     updated_driver = await driver_service.update_driver(db, current_driver.driver_id, driver_update)
     if not updated_driver:

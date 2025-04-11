@@ -56,7 +56,7 @@ async def get_current_customer(
 ):
     customer_email = token_details["user"]["email"]
 
-    customer = await customer_service.get_customer_by_email(customer_email, session)
+    customer = await customer_service.get_customer_by_email(session, customer_email)
 
     return customer
 
@@ -67,6 +67,6 @@ async def get_current_driver(
 ):
     driver_id = token_details["user"]["driver_id"]
 
-    driver = await driver_service.get_driver_by_id(driver_id, session)
+    driver = await driver_service.get_driver_by_id(session, driver_id)
 
     return driver

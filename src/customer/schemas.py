@@ -11,7 +11,6 @@ class CustomerBase(BaseModel):
     last_name: str = Field(..., example="Doe")
     address: Optional[str] = Field(None, example="123 Main St")
     contact_number: Optional[str] = Field(None, example="+1234567890")
-    orders: list[OrderResponse] = []
     
     class Config:
         from_attributes = True

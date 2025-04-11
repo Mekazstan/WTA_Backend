@@ -16,7 +16,7 @@ class DriverService:
         result = await db.execute(select(Driver).where(Driver.contact_number == contact_number))
         return result.scalar_one_or_none()
 
-    async def create_driver(db: AsyncSession, driver: DriverCreate) -> Driver:
+    async def create_driver(self, db: AsyncSession, driver: DriverCreate) -> Driver:
         hashed_password = generate_password_hash(driver.password)
         db_driver = Driver(
             name=driver.name,

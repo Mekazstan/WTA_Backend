@@ -11,7 +11,7 @@ class VehicleDetails(BaseModel):
 class DriverBase(BaseModel):
     name: str = Field(..., example="Tanker Driver 1")
     contact_number: str = Field(..., example="+9876543210")
-    vehicle_details: Optional[str] = Field(None, example="Truck Model XYZ")
+    vehicle_details: Optional[VehicleDetails] = None
     verification_status: Optional[str] = Field("Pending", example="Verified")
     price_per_liter: float = 20.0
     

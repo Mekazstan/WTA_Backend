@@ -8,7 +8,7 @@ from auth.utils import create_access_tokens, verify_password
 from order.schemas import OrderResponse
 from order.services import OrderService
 from .services import CustomerService
-from .schemas import CustomerCreate, CustomerResponse, CustomerLogin, CustomerUpdate
+from .schemas import CustomerCreate, CustomerLogin, CustomerUpdate
 from typing import List
 from datetime import timedelta, datetime
 from auth.dependencies import get_current_customer, RefreshTokenBearer, AccessTokenBearer
@@ -20,21 +20,21 @@ order_service = OrderService()
 
 # --- Customer Authentication ---
 
-@customer_router.post("/signup", response_model=CustomerResponse, status_code=status.HTTP_201_CREATED)
+@customer_router.post("/signup", status_code=status.HTTP_201_CREATED)
 async def create_customer_account(
     customer_create_data: CustomerCreate,
     session: AsyncSession = Depends(get_session)
 ):
     try:
         email = customer_create_data.email
-        customer_exists = await customer_service.get_customer_by_email(email, session)
+        customer_exists = await customer_service.get_customer_by_email(session, email)
         if customer_exists:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"A customer with email {email} already exists.",
             )
 
-        new_customer = await customer_service.create_customer(customer_create_data, session)
+        new_customer = await customer_service.create_customer(session, customer_create_data)
 
         return {
             "message": "Customer Account Created.",
@@ -54,7 +54,7 @@ async def login_customer(
         email = customer_login_data.email
         password = customer_login_data.password
 
-        customer_account = await customer_service.get_customer_by_email(email, session)
+        customer_account = await customer_service.get_customer_by_email(session, email)
         if customer_account is not None:
             password_valid = verify_password(password, customer_account.password_hash)
 
@@ -123,11 +123,11 @@ async def revoke_token(token_details: dict = Depends(AccessTokenBearer())):
 
 
 # --- Customer Profile Management ---
-@customer_router.get("/profile", response_model=CustomerResponse)
+@customer_router.get("/profile")
 async def get_customer_profile(current_customer: Customer = Depends(get_current_customer)):
     return current_customer
 
-@customer_router.patch("/profile", response_model=CustomerResponse)
+@customer_router.patch("/profile")
 async def update_customer_profile(customer_update: CustomerUpdate, current_customer: Customer = Depends(get_current_customer), session: AsyncSession = Depends(get_session)):
     updated_customer = await customer_service.update_customer(session, current_customer.customer_id, customer_update)
     if not updated_customer:

@@ -1,0 +1,9 @@
+asyncpg
+fastapi[standard]
+itsdangerous
+passlib[bcrypt]
+pydantic
+pydantic-settings
+pytest
+pyjwt
+sqlalchemy

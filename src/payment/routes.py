@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 import uuid
-from src.db.main import get_session
+from db.main import get_session
 from .services import PaymentService
 from .schemas import PaymentCreate, PaymentResponse
 

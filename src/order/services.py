@@ -2,8 +2,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from uuid import UUID
 from typing import List, Optional
-from src.db.models import Order
-from schemas import OrderCreate, OrderUpdate
+from db.models import Order
+from .schemas import OrderCreate, OrderUpdate
 
 
 class OrderService:

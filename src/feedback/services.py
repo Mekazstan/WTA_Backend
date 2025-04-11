@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from schemas import FeedbackCreate
-from src.db.models import Feedback
+from .schemas import FeedbackCreate
+from db.models import Feedback
 
 class FeedbackService:
     async def create_feedback(self, session: AsyncSession, feedback: FeedbackCreate) -> Feedback:

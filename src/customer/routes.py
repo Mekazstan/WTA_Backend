@@ -1,16 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.db.main import get_session
-from src.db.models import Customer
+from db.main import get_session
+from db.models import Customer
 from auth.utils import create_access_tokens, verify_password
-from src.order.schemas import OrderResponse
-from src.order.services import OrderService
+from order.schemas import OrderResponse
+from order.services import OrderService
 from .services import CustomerService
 from .schemas import CustomerCreate, CustomerResponse, CustomerLogin, CustomerUpdate
 from typing import List
 from datetime import timedelta
-from src.auth.dependencies import get_current_customer
+from auth.dependencies import get_current_customer
 
 REFRESH_TOKEN_EXPIRY = 2
 customer_router = APIRouter()

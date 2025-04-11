@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.db.main import get_session
+from db.main import get_session
 from .schemas import FeedbackResponse, FeedbackCreate
 from .services import FeedbackService
-from src.order.services import OrderService
-from src.db.models import Customer
-from src.auth.dependencies import get_current_customer
+from order.services import OrderService
+from db.models import Customer
+from auth.dependencies import get_current_customer
 import uuid
 
 feedback_router = APIRouter()

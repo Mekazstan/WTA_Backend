@@ -1,8 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import func
 from sqlalchemy import select
-from schemas import OrderReportResponse, RevenueReportResponse, FeedbackReportResponse
-from src.db.models import Order, Payment, Feedback
+from .schemas import OrderReportResponse, RevenueReportResponse, FeedbackReportResponse
+from db.models import Order, Payment, Feedback
 
 
 class ReportService:

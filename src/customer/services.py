@@ -2,9 +2,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import update, delete, select
 from uuid import UUID
 from typing import List
-from src.db.models import Customer
-from schemas import CustomerCreate, CustomerUpdate
-from src.auth.utils import generate_password_hash
+from db.models import Customer
+from .schemas import CustomerCreate, CustomerUpdate
+from auth.utils import generate_password_hash
 
 class CustomerService:
 

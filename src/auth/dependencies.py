@@ -3,12 +3,12 @@ from fastapi.security import HTTPBearer
 from fastapi.exceptions import HTTPException
 from fastapi.security.http import HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.db.mongo import token_in_blocklist
-from src.db.main import get_session
-from src.db.models import Customer
+from db.mongo import token_in_blocklist
+from db.main import get_session
+from db.models import Customer
 from .utils import decode_token
-from src.customer.services import CustomerService
-from src.driver.services import DriverService
+from customer.services import CustomerService
+from driver.services import DriverService
 from typing import Any, List, Union
 
 

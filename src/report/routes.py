@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.db.main import get_session
+from db.main import get_session
 from .services import ReportService
 from .schemas import OrderReportResponse, RevenueReportResponse, FeedbackReportResponse
 

@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from .services import OrderService
 from .schemas import OrderCreate, OrderResponse
-from src.db.models import Customer
-from src.db.main import get_session
-from src.auth.dependencies import get_current_customer
+from db.models import Customer
+from db.main import get_session
+from auth.dependencies import get_current_customer
 
 
 order_router = APIRouter()

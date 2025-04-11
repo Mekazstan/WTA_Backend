@@ -1,8 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from uuid import UUID
-from schemas import PaymentCreate
-from src.db.models import Payment
+from .schemas import PaymentCreate
+from db.models import Payment
 
 
 class PaymentService:

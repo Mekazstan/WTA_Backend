@@ -1,8 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from src.db.models import AdminUser
-from src.auth.utils import generate_password_hash
-from schemas import AdminUserCreate
+from db.models import AdminUser
+from auth.utils import generate_password_hash
+from .schemas import AdminUserCreate
 
 
 class AdminService:

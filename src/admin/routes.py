@@ -6,13 +6,13 @@ from typing import List, Optional
 from datetime import timedelta
 from .schemas import AdminUserLogin, AdminUserCreate
 from .services import AdminService
-from src.customer.services import CustomerService
-from src.customer.schemas import CustomerResponse, CustomerCreate, CustomerUpdate
-from src.driver.services import DriverService
-from src.driver.schemas import DriverResponse, DriverCreate, DriverUpdate
-from src.order.services import OrderService
-from src.order.schemas import OrderResponse, OrderAssign, OrderUpdate, OrderStatusUpdate
-from src.db.main import get_session
+from customer.services import CustomerService
+from customer.schemas import CustomerResponse, CustomerCreate, CustomerUpdate
+from driver.services import DriverService
+from driver.schemas import DriverResponse, DriverCreate, DriverUpdate
+from order.services import OrderService
+from order.schemas import OrderResponse, OrderAssign, OrderUpdate, OrderStatusUpdate
+from db.main import get_session
 from auth.utils import create_access_tokens, verify_password
 
 REFRESH_TOKEN_EXPIRY = 2

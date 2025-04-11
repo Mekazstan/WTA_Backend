@@ -1,7 +1,7 @@
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 import pymongo.errors
 from datetime import datetime, timedelta
-from src.config import Config
+from config import Config
 import logging
 
 JTI_EXPIRY = 3600

@@ -9,7 +9,7 @@ from auth.utils import create_access_tokens, verify_password
 from order.schemas import OrderResponse
 from order.services import OrderService
 from .services import CustomerService
-from .schemas import CustomerCreate, CustomerLogin, CustomerUpdate
+from .schemas import CustomerCreate, CustomerLogin, CustomerUpdate, CustomerResponse
 from typing import List
 from datetime import timedelta, datetime
 from auth.dependencies import get_current_customer, RefreshTokenBearer, AccessTokenBearer
@@ -159,7 +159,7 @@ async def revoke_token(token_details: dict = Depends(AccessTokenBearer())):
 
 
 # --- Customer Profile Management ---
-@customer_router.get("/profile")
+@customer_router.get("/profile", response_model=CustomerResponse)
 async def get_customer_profile(current_customer: Customer = Depends(get_current_customer)):
     try:
         return current_customer
@@ -170,7 +170,7 @@ async def get_customer_profile(current_customer: Customer = Depends(get_current_
             detail="An error occurred while fetching profile"
         )
 
-@customer_router.patch("/profile")
+@customer_router.patch("/profile", response_model=CustomerResponse)
 async def update_customer_profile(
     customer_update: CustomerUpdate,
     current_customer: Customer = Depends(get_current_customer),

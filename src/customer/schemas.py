@@ -6,7 +6,6 @@ from order.schemas import OrderResponse
 
 class CustomerBase(BaseModel):
     email: str = Field(..., example="customer@example.com")
-    password: str = Field(..., min_length=6, example="securepassword")
     first_name: str = Field(..., example="John")
     last_name: str = Field(..., example="Doe")
     address: Optional[str] = Field(None, example="123 Main St")

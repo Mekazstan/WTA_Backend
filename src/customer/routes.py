@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+import logging
 from db.main import get_session
 from db.models import Customer
 from db.mongo import add_jti_to_blocklist
@@ -17,6 +18,8 @@ REFRESH_TOKEN_EXPIRY = 2
 customer_router = APIRouter()
 customer_service = CustomerService()
 order_service = OrderService()
+
+logger = logging.getLogger(__name__)
 
 # --- Customer Authentication ---
 
@@ -40,8 +43,14 @@ async def create_customer_account(
             "message": "Customer Account Created.",
             "new_customer": new_customer,
         }
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error creating customer account: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while creating the customer account."
+        )
     finally:
         await session.close()
 
@@ -89,8 +98,14 @@ async def login_customer(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid Email or Password",
         )
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error during customer login: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred during login."
+        )
     finally:
         await session.close()
 
@@ -104,36 +119,103 @@ async def get_new_access_token(token_details: dict = Depends(RefreshTokenBearer(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or Expired Token"
         )
-    except Exception as e:
+    except HTTPException:
+        raise
+    except KeyError as e:
+        logger.error(f"Missing key in token details: {str(e)}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid token format"
+        )
+    except Exception as e:
+        logger.error(f"Error refreshing token: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while refreshing token"
         )
 
 
 @customer_router.get("/logout")
 async def revoke_token(token_details: dict = Depends(AccessTokenBearer())):
-    jti = token_details["jti"]
-    await add_jti_to_blocklist(jti)
+    try:
+        jti = token_details["jti"]
+        await add_jti_to_blocklist(jti)
 
-    return JSONResponse(
-        content={"message": "Logged out Successfully"},
-        status_code=status.HTTP_200_OK,
-    )
-
+        return JSONResponse(
+            content={"message": "Logged out Successfully"},
+            status_code=status.HTTP_200_OK,
+        )
+    except KeyError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid token format"
+        )
+    except Exception as e:
+        logger.error(f"Error during logout: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred during logout"
+        )
 
 
 # --- Customer Profile Management ---
 @customer_router.get("/profile")
 async def get_customer_profile(current_customer: Customer = Depends(get_current_customer)):
-    return current_customer
+    try:
+        return current_customer
+    except Exception as e:
+        logger.error(f"Error fetching customer profile: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while fetching profile"
+        )
 
 @customer_router.patch("/profile")
-async def update_customer_profile(customer_update: CustomerUpdate, current_customer: Customer = Depends(get_current_customer), session: AsyncSession = Depends(get_session)):
-    updated_customer = await customer_service.update_customer(session, current_customer.customer_id, customer_update)
-    if not updated_customer:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
-    return updated_customer
+async def update_customer_profile(
+    customer_update: CustomerUpdate,
+    current_customer: Customer = Depends(get_current_customer),
+    session: AsyncSession = Depends(get_session)
+):
+    try:
+        updated_customer = await customer_service.update_customer(
+            session, current_customer.customer_id, customer_update
+        )
+        if not updated_customer:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Customer not found"
+            )
+        return updated_customer
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating customer profile: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while updating profile"
+        )
+    finally:
+        await session.close()
 
 @customer_router.get("/orders", response_model=List[OrderResponse])
-async def get_customer_order_history(current_customer: Customer = Depends(get_current_customer), session: AsyncSession = Depends(get_session), skip: int = 0, limit: int = 100):
-    return await order_service.list_customer_orders(session, current_customer.customer_id, skip=skip, limit=limit)
+async def get_customer_order_history(
+    current_customer: Customer = Depends(get_current_customer),
+    session: AsyncSession = Depends(get_session),
+    skip: int = 0,
+    limit: int = 100
+):
+    try:
+        return await order_service.list_customer_orders(
+            session, current_customer.customer_id, skip=skip, limit=limit
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching customer orders: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while fetching orders"
+        )
+    finally:
+        await session.close()
+        

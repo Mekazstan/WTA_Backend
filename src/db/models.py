@@ -89,4 +89,5 @@ class AdminUser(Base):
     password_hash = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=func.now())
+
     

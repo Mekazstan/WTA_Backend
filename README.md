@@ -54,61 +54,80 @@ This repository contains the backend implementation for the Water Tanker Availab
 
 The backend exposes the following API endpoints:
 
-###  Customer Authentication:
+### Customer Authentication:
 
 * `POST /api/customers/register`: For new customer registration.
-* `POST /api/customers/login`: For customer login and session management (e.g., using JWT).
+* `POST /api/customers/login`: For customer login and session management.
+* `GET /api/customers/refresh_token`: To refresh the access token using a valid refresh token.
+* `GET /api/customers/logout`: To revoke the current access token (logout).
 
 ### Customer Profile Management:
 
-* `GET /api/customers/profile`: To retrieve customer profile details.
-* `PUT /api/customers/profile`: To update customer profile details.
+* `GET /api/customers/profile`: To retrieve customer profile details (requires authentication).
+* `PUT /api/customers/profile`: To update customer profile details (requires authentication).
+* `GET /api/customers/orders`: To retrieve the logged-in customer's order history (requires authentication).
 
 ### Order Management (Customer Side):
 
-* `POST /api/orders`: To place a new order.
-* `GET /api/customers/orders`: To retrieve a customer's order history.
+* `POST /api/orders`: To place a new order (requires customer authentication).
 
 ### Payment Integration:
 
-Endpoints to initiate and verify payments with the chosen payment gateway. This will likely involve interacting with a third-party API.
+* `POST /api/payments`: To initiate a payment (requires authentication, details depend on the payment gateway).
+* `GET /api/payments/{payment_id}`: To retrieve payment details (requires authentication).
+    * **Note:** Endpoints for verifying payment status (e.g., from a webhook) might be added depending on the payment gateway.
 
 ### Feedback and Ratings:
 
-* `POST /api/orders/{order_id}/feedback`: To submit feedback and a rating for a completed order.
+* `POST /api/feedback/{order_id}`: To submit feedback and a rating for a completed order (requires customer authentication).
 
-###  Admin Authentication:
+### Driver Authentication:
 
+* `POST /api/drivers/register`: For new driver registration.
+* `POST /api/drivers/login`: For driver login and session management.
+* `GET /api/drivers/refresh_token`: To refresh the driver's access token.
+* `GET /api/drivers/logout`: To revoke the driver's access token (logout).
+
+### Driver Profile Management:
+
+* `GET /api/drivers/profile`: To retrieve driver profile details (requires driver authentication).
+* `PUT /api/drivers/profile`: To update driver profile details (requires driver authentication).
+
+### Admin Authentication:
+
+* `POST /api/admin/signup`: For new admin user registration.
 * `POST /api/admin/login`: For admin login and session management.
+* `GET /api/admin/refresh_token`: To refresh the admin's access token.
+* `GET /api/admin/logout`: To revoke the admin's access token (logout).
 
 ### Admin User Management:
 
-* `GET /api/admin/customers`: To list all customers (with optional filtering/pagination).
-* `GET /api/admin/customers/{customer_id}`: To retrieve details of a specific customer.
-* `POST /api/admin/customers`: To add a new customer (if needed).
-* `PUT /api/admin/customers/{customer_id}`: To update customer details.
-* `DELETE /api/admin/customers/{customer_id}`: To deactivate a customer account.
+* `GET /api/admin/customers`: To list all customers (requires admin authentication).
+* `GET /api/admin/customers/{customer_id}`: To retrieve details of a specific customer (requires admin authentication).
+* `POST /api/admin/customers`: To add a new customer (requires admin authentication).
+* `PUT /api/admin/customers/{customer_id}`: To update customer details (requires admin authentication).
+* `DELETE /api/admin/customers/{customer_id}`: To deactivate a customer account (requires admin authentication).
 
 ### Admin Driver Management:
 
-* `GET /api/admin/drivers`: To list all drivers (with optional filtering).
-* `GET /api/admin/drivers/{driver_id}`: To retrieve details of a specific driver.
-* `POST /api/admin/drivers`: To add a new driver.
-* `PUT /api/admin/drivers/{driver_id}`: To update driver information.
-* `DELETE /api/admin/drivers/{driver_id}`: To deactivate a driver.
+* `GET /api/admin/drivers`: To list all drivers (requires admin authentication).
+* `GET /api/admin/drivers/{driver_id}`: To retrieve details of a specific driver (requires admin authentication).
+* `POST /api/admin/drivers`: To add a new driver (requires admin authentication).
+* `PUT /api/admin/drivers/{driver_id}`: To update driver information (requires admin authentication).
+* `DELETE /api/admin/drivers/{driver_id}`: To deactivate a driver (requires admin authentication).
 
 ### Admin Order Management:
 
-* `GET /api/admin/orders`: To list all orders (with filtering options based on status, date, etc.).
-* `GET /api/admin/orders/{order_id}`: To retrieve details of a specific order.
-* `PUT /api/admin/orders/{order_id}/assign`: To manually assign an order to a driver (requires driver_id in the request).
-* `PUT /api/admin/orders/{order_id}/status`: To manually update the delivery status of an order.
+* `GET /api/admin/orders`: To list all orders (requires admin authentication).
+* `GET /api/admin/orders/{order_id}`: To retrieve details of a specific order (requires admin authentication).
+* `PUT /api/admin/orders/{order_id}/assign`: To manually assign an order to a driver (requires admin authentication).
+* `PUT /api/admin/orders/{order_id}/status`: To manually update the delivery status of an order (requires admin authentication).
 
 ### Admin Reporting:
 
-* `GET /api/admin/reports/orders`: To generate reports on order statistics (e.g., total orders, completed orders).
-* `GET /api/admin/reports/revenue`: To generate revenue reports (based on completed payments).
-* `GET /api/admin/reports/feedback`: To retrieve feedback trends.
+* `GET /api/admin/reports/orders`: To generate reports on order statistics (requires admin authentication).
+* `GET /api/admin/reports/revenue`: To generate revenue reports (requires admin authentication).
+* `GET /api/admin/reports/feedback`: To retrieve feedback trends (requires admin authentication).
 
 
 ## Data Models

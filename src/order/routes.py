@@ -1,17 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+from .services import OrderService
+from .schemas import OrderCreate, OrderResponse
+from src.db.models import Customer
+from src.db.main import get_session
+from src.auth.dependencies import get_current_customer
 
-from . import schemas, services, models
-from database import get_db
-from .utils import hash_password, verify_password, create_access_token
-from fastapi.security import OAuth2PasswordRequestForm
-from datetime import timedelta
 
 order_router = APIRouter()
+order_service = OrderService()
 
-@order_router.post("/", response_model=schemas.OrderResponse, status_code=status.HTTP_201_CREATED)
-async def create_new_order(order: schemas.OrderCreate, current_customer: models.Customer = Depends(get_current_customer), db: AsyncSession = Depends(get_db)):
+@order_router.post("/", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
+async def create_new_order(order: OrderCreate, current_customer: Customer = Depends(get_current_customer), db: AsyncSession = Depends(get_session)):
     order.customer_id = current_customer.customer_id
-    return await services.create_order(db, order)
+    return await order_service.create_order(db, order)
 

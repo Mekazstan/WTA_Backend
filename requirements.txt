@@ -1,6 +1,7 @@
 asyncpg
 fastapi[standard]
 itsdangerous
+motor
 passlib[bcrypt]
 pydantic
 pydantic-settings

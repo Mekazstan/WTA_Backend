@@ -38,10 +38,10 @@ async def create_order_feedback(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to retrieve order information"
             )
-        feedback.customer_id = current_customer.customer_id
-        feedback.order_id = order_id
+        customer_id = current_customer.customer_id
         try:
-            return await feedback_service.create_feedback(session, feedback)
+            print(f"Feedback: {feedback}")
+            return await feedback_service.create_feedback(session, feedback, customer_id, order_id)
         except Exception as feedback_error:
             logger.error(f"Error creating feedback for order {order_id}: {str(feedback_error)}")
             raise HTTPException(

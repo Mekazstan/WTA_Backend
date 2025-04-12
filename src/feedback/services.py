@@ -3,11 +3,17 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from .schemas import FeedbackCreate
 from db.models import Feedback
+import uuid
 
 class FeedbackService:
-    async def create_feedback(self, session: AsyncSession, feedback: FeedbackCreate) -> Feedback:
+    async def create_feedback(self, session: AsyncSession, feedback: FeedbackCreate, customer_id: uuid.UUID, order_id: uuid.UUID) -> Feedback:
         try:
-            db_feedback = Feedback(**feedback.dict())
+            db_feedback = Feedback(
+                order_id = order_id,
+                customer_id = customer_id,
+                rating = feedback.rating,
+                comment = feedback.comment
+            )
             session.add(db_feedback)
             await session.commit()
             await session.refresh(db_feedback)

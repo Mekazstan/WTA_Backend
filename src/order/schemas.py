@@ -14,6 +14,7 @@ class OrderBase(BaseModel):
 
 class OrderCreate(OrderBase):
     customer_id: UUID
+    assigned_driver_id: Optional[UUID] = Field(None, example="some-driver-uuid")
     
     class Config:
         from_attributes = True
@@ -37,7 +38,7 @@ class OrderResponse(OrderBase):
     payment_status: Optional[str]
     cancellation_reason: Optional[str] = None
     created_at: datetime
-    updated_at: datetime
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -59,3 +60,4 @@ class OrderCancellationRequest(BaseModel):
     
     class Config:
         from_attributes = True
+        

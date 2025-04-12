@@ -4,8 +4,6 @@ from typing import Optional
 from uuid import UUID
 
 class FeedbackBase(BaseModel):
-    order_id: UUID
-    customer_id: UUID
     rating: int = Field(..., ge=1, le=5, example=4)
     comment: Optional[str] = Field(None, example="Good service!")
     
@@ -16,6 +14,8 @@ class FeedbackCreate(FeedbackBase):
     pass
 
 class FeedbackResponse(FeedbackBase):
+    order_id: UUID
+    customer_id: UUID
     feedback_id: UUID
     feedback_date: datetime
 

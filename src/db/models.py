@@ -52,7 +52,7 @@ class Order(Base):
     payment_method = Column(String(50))
     cancellation_reason = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
 
     customer = relationship("Customer", back_populates="orders")
     assigned_driver = relationship("Driver", back_populates="orders")

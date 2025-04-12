@@ -41,7 +41,7 @@ async def create_new_order(
         )
 
 
-@order_router.post("/{order_id}/cancel", response_model=OrderResponse)
+@order_router.post("/{order_id}/cancel")
 async def cancel_order(
     order_id: uuid.UUID,
     cancellation_request: Optional[OrderCancellationRequest] = None,
@@ -61,9 +61,10 @@ async def cancel_order(
 
         db_order.delivery_status = "Cancellation Requested"
         if cancellation_request and cancellation_request.reason:
-            logger.info(f"Cancellation requested for order {order_id} by user {current_user.id}. Reason: {cancellation_request.reason}")
+            db_order.cancellation_reason = cancellation_request.reason
+            logger.info(f"Cancellation requested for order {order_id} by user {current_user.customer_id}. Reason: {cancellation_request.reason}")
         else:
-            logger.info(f"Cancellation requested for order {order_id} by user {current_user.id}.")
+            logger.info(f"Cancellation requested for order {order_id} by user {current_user.customer_id}.")
 
         await session.commit()
         await session.refresh(db_order)
@@ -71,7 +72,7 @@ async def cancel_order(
         # Here should trigger the notification (Send an email notification, to the team Slack channel)
         logger.info(f"Admin notification triggered for order cancellation: {order_id}")
 
-        return {"message": f"Cancellation request for order {order_id} initiated. We will contact you shortly."}
+        return db_order
     
     except HTTPException:
         raise

@@ -39,10 +39,7 @@ async def create_customer_account(
 
         new_customer = await customer_service.create_customer(session, customer_create_data)
 
-        return {
-            "message": "Customer Account Created.",
-            "new_customer": new_customer,
-        }
+        return new_customer
     except HTTPException:
         raise
     except Exception as e:

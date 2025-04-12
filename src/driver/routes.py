@@ -17,17 +17,14 @@ driver_service = DriverService()
 
 # --- Customer Authentication ---
 
-@driver_router.post("/signup", status_code=status.HTTP_201_CREATED)
+@driver_router.post("/signup", status_code=status.HTTP_201_CREATED, response_model=DriverResponse)
 async def create_driver_account(
     driver_create_data: DriverCreate,
     session: AsyncSession = Depends(get_session)
 ):
     try:
         new_driver = await driver_service.create_driver(session, driver_create_data)
-        return {
-            "message": "Customer Account Created.",
-            "new_driver": new_driver,
-        }
+        return new_driver
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except IntegrityError as e:
@@ -145,7 +142,7 @@ async def revoke_token(token_details: dict = Depends(AccessTokenBearer())):
         )
 
 # --- Driver Profile Management ---
-@driver_router.get("/profile")
+@driver_router.get("/profile", response_model=DriverResponse)
 async def get_driver_profile(current_driver: Driver = Depends(get_current_driver)):
     try:
         return current_driver
@@ -155,7 +152,7 @@ async def get_driver_profile(current_driver: Driver = Depends(get_current_driver
             detail="Failed to fetch profile"
         )
 
-@driver_router.patch("/profile")
+@driver_router.patch("/profile", response_model=DriverResponse)
 async def update_driver_profile(
     driver_update: DriverUpdate, 
     current_driver: Driver = Depends(get_current_driver), 

@@ -1,4 +1,5 @@
 import uuid
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import (Column, Integer, String, DateTime, ForeignKey, 
                         Numeric, Text, Boolean, Float)
 from sqlalchemy.orm import relationship
@@ -27,7 +28,7 @@ class Driver(Base):
     driver_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False)
     contact_number = Column(String(20), unique=True, nullable=False)
-    vehicle_details = Column(Text)
+    vehicle_details = Column(JSONB)
     verification_status = Column(String(50), default="Pending")
     registration_date = Column(DateTime(timezone=True), default=func.now())
     price_per_liter = Column(Float, default=20.0)

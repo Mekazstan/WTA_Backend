@@ -15,7 +15,10 @@ class CustomerBase(BaseModel):
         from_attributes = True
 
 class CustomerCreate(CustomerBase):
-    pass
+    password: Optional[str] = Field(None, min_length=6, example="newpassword")
+    
+    class Config:
+        from_attributes = True
 
 class CustomerUpdate(CustomerBase):
     email: Optional[str] = Field(None, example="new.email@example.com")

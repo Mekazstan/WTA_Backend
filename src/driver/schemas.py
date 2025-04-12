@@ -45,6 +45,11 @@ class DriverResponse(DriverBase):
     driver_id: UUID
     registration_date: datetime
     is_active: bool
+    vehicle_details: Optional[VehicleDetails] = None
 
     class Config:
         from_attributes = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat(),
+            UUID: lambda v: str(v),
+        }

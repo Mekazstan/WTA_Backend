@@ -33,7 +33,7 @@ class DriverService:
             db_driver = Driver(
                 name=driver.name,
                 contact_number=driver.contact_number,
-                vehicle_details=driver.vehicle_details.model_dump_json(),
+                vehicle_details=driver.vehicle_details.model_dump() if driver.vehicle_details else None,
                 verification_status=driver.verification_status,
                 password_hash=hashed_password,
                 price_per_liter=driver.price_per_liter

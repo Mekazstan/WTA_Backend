@@ -8,7 +8,7 @@ from .services import OrderService
 from .schemas import OrderCreate, OrderResponse, OrderCancellationRequest
 from db.models import Customer, Order
 from db.main import get_session
-from auth.dependencies import get_current_customer
+from auth.dependencies import get_current_user, require_role
 
 logger = logging.getLogger(__name__)
 
@@ -16,10 +16,10 @@ logger = logging.getLogger(__name__)
 order_router = APIRouter()
 order_service = OrderService()
 
-@order_router.post("/", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
+@order_router.post("/", response_model=OrderResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_role(["admin", "customer"]))])
 async def create_new_order(
     order: OrderCreate, 
-    current_customer: Customer = Depends(get_current_customer), 
+    current_customer: Customer = Depends(get_current_user), 
     db: AsyncSession = Depends(get_session)
 ):
     try:
@@ -41,12 +41,12 @@ async def create_new_order(
         )
 
 
-@order_router.post("/{order_id}/cancel")
+@order_router.post("/{order_id}/cancel", dependencies=[Depends(require_role(["admin", "customer"]))])
 async def cancel_order(
     order_id: uuid.UUID,
     cancellation_request: Optional[OrderCancellationRequest] = None,
     session: AsyncSession = Depends(get_session),
-    current_user: Customer = Depends(get_current_customer)
+    current_user: Customer = Depends(get_current_user)
 ):
     """
     Initiates the cancellation of a specific order.

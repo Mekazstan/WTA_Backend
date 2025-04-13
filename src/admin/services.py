@@ -2,6 +2,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+import uuid
 import logging
 from db.models import AdminUser
 from auth.utils import generate_password_hash
@@ -9,6 +10,13 @@ from .schemas import AdminUserCreate
 
 
 class AdminService:
+    async def get_admin_user_by_id(self, session: AsyncSession, admin_id: uuid.UUID) -> AdminUser | None:
+        try:
+            result = await session.execute(select(AdminUser).where(AdminUser.admin_id == admin_id))
+            return result.scalar_one_or_none()
+        except Exception as e:
+            logging.error(f"Error getting admin user by ID {admin_id}: {e}", exc_info=True)
+            raise
     
     async def get_admin_user_by_email(self, session: AsyncSession, email: str) -> AdminUser | None:
         try:

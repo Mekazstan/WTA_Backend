@@ -15,7 +15,7 @@ from order.schemas import OrderResponse, OrderAssign, OrderUpdate, OrderStatusUp
 from db.main import get_session
 from db.mongo import add_jti_to_blocklist
 from auth.utils import create_access_tokens, verify_password
-from auth.dependencies import RefreshTokenBearer, AccessTokenBearer
+from auth.dependencies import RefreshTokenBearer, AccessTokenBearer, require_role
 
 REFRESH_TOKEN_EXPIRY = 2
 admin_router = APIRouter()
@@ -70,14 +70,16 @@ async def login_admin(
                 access_token = create_access_tokens(
                     user_data={
                         "email": admin_user.email,
-                        "admin_id": str(admin_user.admin_id)
+                        "admin_id": str(admin_user.admin_id),
+                        "role": "admin"
                     }
                 )
 
                 refresh_token = create_access_tokens(
                     user_data={
                         "email": admin_user.email,
-                        "admin_id": str(admin_user.admin_id)
+                        "admin_id": str(admin_user.admin_id),
+                        "role": "admin"
                     },
                     refresh=True,
                     expiry=timedelta(days=REFRESH_TOKEN_EXPIRY),
@@ -143,7 +145,7 @@ async def revoke_token(token_details: dict = Depends(AccessTokenBearer())):
         )
 
 # --- Admin User Management ---
-@admin_router.get("/customers", response_model=List[CustomerResponse])
+@admin_router.get("/customers", response_model=List[CustomerResponse], dependencies=[Depends(require_role(["admin"]))])
 async def list_all_customers(session: AsyncSession = Depends(get_session), skip: int = 0, limit: int = 100):
     try:
         customers = await customer_service.list_customers(session, skip=skip, limit=limit)
@@ -158,7 +160,7 @@ async def list_all_customers(session: AsyncSession = Depends(get_session), skip:
     finally:
         await session.close()
 
-@admin_router.get("/customers/{customer_id}", response_model=CustomerResponse)
+@admin_router.get("/customers/{customer_id}", response_model=CustomerResponse, dependencies=[Depends(require_role(["admin"]))])
 async def get_customer_by_admin(customer_id: uuid.UUID, session: AsyncSession = Depends(get_session)):
     try:
         customer = await customer_service.get_customer_by_id(session, customer_id)
@@ -175,7 +177,7 @@ async def get_customer_by_admin(customer_id: uuid.UUID, session: AsyncSession = 
     finally:
         await session.close()
 
-@admin_router.post("/customers", response_model=CustomerResponse, status_code=status.HTTP_201_CREATED)
+@admin_router.post("/customers", response_model=CustomerResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_role(["admin"]))])
 async def add_new_customer_by_admin(customer: CustomerCreate, session: AsyncSession = Depends(get_session)):
     try:
         db_customer = await customer_service.get_customer_by_email(session, customer.email)
@@ -192,7 +194,7 @@ async def add_new_customer_by_admin(customer: CustomerCreate, session: AsyncSess
     finally:
         await session.close()
 
-@admin_router.patch("/customers/{customer_id}", response_model=CustomerResponse)
+@admin_router.patch("/customers/{customer_id}", response_model=CustomerResponse, dependencies=[Depends(require_role(["admin"]))])
 async def update_customer_by_admin(customer_id: uuid.UUID, customer_update: CustomerUpdate, session: AsyncSession = Depends(get_session)):
     try:
         updated_customer = await customer_service.update_customer(session, customer_id, customer_update)
@@ -209,7 +211,7 @@ async def update_customer_by_admin(customer_id: uuid.UUID, customer_update: Cust
     finally:
         await session.close()
 
-@admin_router.delete("/customers/{customer_id}", status_code=status.HTTP_204_NO_CONTENT)
+@admin_router.delete("/customers/{customer_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_role(["admin"]))])
 async def deactivate_customer_by_admin(customer_id: uuid.UUID, session: AsyncSession = Depends(get_session)):
     try:
         deleted = await customer_service.delete_customer(session, customer_id)
@@ -227,7 +229,7 @@ async def deactivate_customer_by_admin(customer_id: uuid.UUID, session: AsyncSes
         await session.close()
 
 # --- Admin Driver Management ---
-@admin_router.get("/drivers", response_model=List[DriverResponse])
+@admin_router.get("/drivers", response_model=List[DriverResponse], dependencies=[Depends(require_role(["admin"]))])
 async def list_all_drivers(session: AsyncSession = Depends(get_session), skip: int = 0, limit: int = 100):
     try:
         drivers = await driver_service.list_drivers(session, skip=skip, limit=limit)
@@ -242,7 +244,7 @@ async def list_all_drivers(session: AsyncSession = Depends(get_session), skip: i
     finally:
         await session.close()
 
-@admin_router.get("/drivers/{driver_id}", response_model=DriverResponse)
+@admin_router.get("/drivers/{driver_id}", response_model=DriverResponse, dependencies=[Depends(require_role(["admin"]))])
 async def get_driver_by_admin(driver_id: uuid.UUID, session: AsyncSession = Depends(get_session)):
     try:
         driver = await driver_service.get_driver_by_id(session, driver_id)
@@ -276,7 +278,7 @@ async def add_new_driver_by_admin(driver: DriverCreate, session: AsyncSession = 
     finally:
         await session.close()
 
-@admin_router.patch("/drivers/{driver_id}", response_model=DriverResponse)
+@admin_router.patch("/drivers/{driver_id}", response_model=DriverResponse, dependencies=[Depends(require_role(["admin"]))])
 async def update_driver_by_admin(driver_id: uuid.UUID, driver_update: DriverUpdate, session: AsyncSession = Depends(get_session)):
     try:
         updated_driver = await driver_service.update_driver(session, driver_id, driver_update)
@@ -293,7 +295,7 @@ async def update_driver_by_admin(driver_id: uuid.UUID, driver_update: DriverUpda
     finally:
         await session.close()
 
-@admin_router.delete("/drivers/{driver_id}", status_code=status.HTTP_204_NO_CONTENT)
+@admin_router.delete("/drivers/{driver_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_role(["admin"]))])
 async def deactivate_driver_by_admin(driver_id: uuid.UUID, session: AsyncSession = Depends(get_session)):
     try:
         deleted = await driver_service.delete_driver(session, driver_id)
@@ -311,7 +313,7 @@ async def deactivate_driver_by_admin(driver_id: uuid.UUID, session: AsyncSession
         await session.close()
 
 # --- Admin Order Management ---
-@admin_router.get("/orders", response_model=List[OrderResponse])
+@admin_router.get("/orders", response_model=List[OrderResponse], dependencies=[Depends(require_role(["admin"]))])
 async def list_all_orders_by_admin(session: AsyncSession = Depends(get_session), skip: int = 0, limit: int = 100, status: Optional[str] = None):
     try:
         orders = await order_service.list_orders(session, skip=skip, limit=limit, status=status)
@@ -326,7 +328,7 @@ async def list_all_orders_by_admin(session: AsyncSession = Depends(get_session),
     finally:
         await session.close()
 
-@admin_router.get("/orders/{order_id}", response_model=OrderResponse)
+@admin_router.get("/orders/{order_id}", response_model=OrderResponse, dependencies=[Depends(require_role(["admin"]))])
 async def get_order_by_admin(order_id: uuid.UUID, session: AsyncSession = Depends(get_session)):
     try:
         order = await order_service.get_order(session, order_id)
@@ -343,7 +345,7 @@ async def get_order_by_admin(order_id: uuid.UUID, session: AsyncSession = Depend
     finally:
         await session.close()
 
-@admin_router.patch("/orders/{order_id}/assign", response_model=OrderResponse)
+@admin_router.patch("/orders/{order_id}/assign", response_model=OrderResponse, dependencies=[Depends(require_role(["admin"]))])
 async def assign_order_to_driver(order_id: uuid.UUID, order_assign: OrderAssign, session: AsyncSession = Depends(get_session)):
     try:
         db_order = await order_service.get_order(session, order_id)
@@ -364,7 +366,7 @@ async def assign_order_to_driver(order_id: uuid.UUID, order_assign: OrderAssign,
     finally:
         await session.close()
 
-@admin_router.patch("/orders/{order_id}/status", response_model=OrderResponse)
+@admin_router.patch("/orders/{order_id}/status", response_model=OrderResponse, dependencies=[Depends(require_role(["admin"]))])
 async def update_order_delivery_status(order_id: uuid.UUID, status_update: OrderStatusUpdate, session: AsyncSession = Depends(get_session)):
     try:
         db_order = await order_service.get_order(session, order_id)

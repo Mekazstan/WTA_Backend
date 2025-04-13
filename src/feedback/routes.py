@@ -6,7 +6,7 @@ from .schemas import FeedbackResponse, FeedbackCreate
 from .services import FeedbackService
 from order.services import OrderService
 from db.models import Customer
-from auth.dependencies import get_current_customer
+from auth.dependencies import get_current_user, require_role
 import uuid
 
 feedback_router = APIRouter()
@@ -15,11 +15,11 @@ order_service = OrderService()
 
 logger = logging.getLogger(__name__)
 
-@feedback_router.post("/{order_id}", response_model=FeedbackResponse, status_code=status.HTTP_201_CREATED)
+@feedback_router.post("/{order_id}", response_model=FeedbackResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_role(["admin", "customer"]))])
 async def create_order_feedback(
     order_id: uuid.UUID, 
     feedback: FeedbackCreate, 
-    current_customer: Customer = Depends(get_current_customer), 
+    current_customer: Customer = Depends(get_current_user), 
     session: AsyncSession = Depends(get_session)
 ):
     try:

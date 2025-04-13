@@ -9,7 +9,7 @@ from db.models import Driver
 from datetime import timedelta, datetime
 from .schemas import DriverResponse, DriverCreate, DriverLogin, DriverUpdate
 from .services import DriverService
-from auth.dependencies import get_current_driver, RefreshTokenBearer, AccessTokenBearer
+from auth.dependencies import get_current_user, RefreshTokenBearer, AccessTokenBearer, require_role
 
 REFRESH_TOKEN_EXPIRY = 2
 driver_router = APIRouter()
@@ -60,14 +60,16 @@ async def login_driver(
         access_token = create_access_tokens(
             user_data={
                 "contact_number": driver_account.contact_number,
-                "driver_id": str(driver_account.driver_id)
+                "driver_id": str(driver_account.driver_id),
+                "role": "driver"
             }
         )
 
         refresh_token = create_access_tokens(
             user_data={
                 "contact_number": driver_account.contact_number,
-                "driver_id": str(driver_account.driver_id)
+                "driver_id": str(driver_account.driver_id),
+                "role": "driver"
             },
             refresh=True,
             expiry=timedelta(days=REFRESH_TOKEN_EXPIRY),
@@ -142,8 +144,8 @@ async def revoke_token(token_details: dict = Depends(AccessTokenBearer())):
         )
 
 # --- Driver Profile Management ---
-@driver_router.get("/profile", response_model=DriverResponse)
-async def get_driver_profile(current_driver: Driver = Depends(get_current_driver)):
+@driver_router.get("/profile", response_model=DriverResponse, dependencies=[Depends(require_role(["admin", "driver"]))])
+async def get_driver_profile(current_driver: Driver = Depends(get_current_user)):
     try:
         return current_driver
     except Exception as e:
@@ -152,10 +154,10 @@ async def get_driver_profile(current_driver: Driver = Depends(get_current_driver
             detail="Failed to fetch profile"
         )
 
-@driver_router.patch("/profile", response_model=DriverResponse)
+@driver_router.patch("/profile", response_model=DriverResponse, dependencies=[Depends(require_role(["admin", "driver"]))])
 async def update_driver_profile(
     driver_update: DriverUpdate, 
-    current_driver: Driver = Depends(get_current_driver), 
+    current_driver: Driver = Depends(get_current_user), 
     db: AsyncSession = Depends(get_session)
 ):
     try:

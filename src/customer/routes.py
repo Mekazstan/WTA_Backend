@@ -12,7 +12,7 @@ from .services import CustomerService
 from .schemas import CustomerCreate, CustomerLogin, CustomerUpdate, CustomerResponse
 from typing import List
 from datetime import timedelta, datetime
-from auth.dependencies import get_current_customer, RefreshTokenBearer, AccessTokenBearer
+from auth.dependencies import get_current_user, RefreshTokenBearer, AccessTokenBearer, require_role
 
 REFRESH_TOKEN_EXPIRY = 2
 customer_router = APIRouter()
@@ -68,14 +68,16 @@ async def login_customer(
                 access_token = create_access_tokens(
                     user_data={
                         "email": customer_account.email,
-                        "customer_id": str(customer_account.customer_id)
+                        "customer_id": str(customer_account.customer_id),
+                        "role": "customer"
                     }
                 )
 
                 refresh_token = create_access_tokens(
                     user_data={
                         "email": customer_account.email,
-                        "customer_id": str(customer_account.customer_id)
+                        "customer_id": str(customer_account.customer_id),
+                        "role": "customer"
                     },
                     refresh=True,
                     expiry=timedelta(days=REFRESH_TOKEN_EXPIRY),
@@ -156,8 +158,8 @@ async def revoke_token(token_details: dict = Depends(AccessTokenBearer())):
 
 
 # --- Customer Profile Management ---
-@customer_router.get("/profile", response_model=CustomerResponse)
-async def get_customer_profile(current_customer: Customer = Depends(get_current_customer)):
+@customer_router.get("/profile", response_model=CustomerResponse, dependencies=[Depends(require_role(["admin", "customer"]))])
+async def get_customer_profile(current_customer: Customer = Depends(get_current_user)):
     try:
         return current_customer
     except Exception as e:
@@ -167,10 +169,10 @@ async def get_customer_profile(current_customer: Customer = Depends(get_current_
             detail="An error occurred while fetching profile"
         )
 
-@customer_router.patch("/profile", response_model=CustomerResponse)
+@customer_router.patch("/profile", response_model=CustomerResponse, dependencies=[Depends(require_role(["admin", "customer"]))])
 async def update_customer_profile(
     customer_update: CustomerUpdate,
-    current_customer: Customer = Depends(get_current_customer),
+    current_customer: Customer = Depends(get_current_user),
     session: AsyncSession = Depends(get_session)
 ):
     try:
@@ -194,9 +196,9 @@ async def update_customer_profile(
     finally:
         await session.close()
 
-@customer_router.get("/orders", response_model=List[OrderResponse])
+@customer_router.get("/orders", response_model=List[OrderResponse], dependencies=[Depends(require_role(["admin", "customer"]))])
 async def get_customer_order_history(
-    current_customer: Customer = Depends(get_current_customer),
+    current_customer: Customer = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
     skip: int = 0,
     limit: int = 100

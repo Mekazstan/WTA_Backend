@@ -37,7 +37,7 @@ class Customer(Base):
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
-    password = Column(String, nullable=False),
+    password = Column(String, nullable=False)
     registration_date = Column(DateTime, default=datetime.utcnow)
     orders = relationship("Order", back_populates="customer", cascade="all, delete-orphan")
     recyclable_submissions = relationship("RecyclableSubmission", back_populates="customer", cascade="all, delete-orphan")

@@ -1,38 +1,39 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import select
 from contextlib import asynccontextmanager
 from admin.routes import admin_router
 from customer.routes import customer_router
 from staff.routes import staff_router
-from db.main import init_db, get_session
+from db.main import init_db, engine
 from db.models import SuperAdmin
 from config import Config
 from utils.helper_func import get_password_hash
 from sqlalchemy.ext.asyncio import AsyncSession
 
-async def create_super_admin(db: AsyncSession):
+async def create_super_admin():
     """
-    Creates the initial superadmin user.  This should only be run once,
-    during initial database setup.  Now an async function.
+    Creates the initial superadmin user. This should only be run once.
     """
-    result = await db.execute(db.query(SuperAdmin).limit(1))
-    if result.scalar_one_or_none():
-        print("SuperAdmin already exists.")
-        return
-    email = Config.ADMIN_EMAIL
-    password = Config.ADMIN_PASSWORD
-    hashed_password = get_password_hash(password)
-    superadmin = SuperAdmin(email=email, password=hashed_password)
-    db.add(superadmin)
-    await db.commit()
-    print("SuperAdmin created.")
+    async with engine.begin() as conn:
+        async with AsyncSession(bind=conn) as db:
+            result = await db.execute(select(SuperAdmin).limit(1))
+            if result.scalar_one_or_none():
+                print("SuperAdmin already exists.")
+                return
+            email = Config.ADMIN_EMAIL
+            password = Config.ADMIN_PASSWORD
+            hashed_password = get_password_hash(password)
+            superadmin = SuperAdmin(email=email, password=hashed_password)
+            db.add(superadmin)
+            await db.commit()
+            print("SuperAdmin created.")
 
-@asynccontextmanager 
-async def life_span(app:FastAPI):
+@asynccontextmanager
+async def life_span(app: FastAPI):
     print(f"Server is starting...")
     await init_db()
-    async with get_session() as db:
-        await create_super_admin(db)
+    await create_super_admin()
     yield
     print(f"Server has been stopped")
 

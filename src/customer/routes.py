@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, status, HTTPException
-from fastapi.security import security
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import EmailStr
 from sqlalchemy import select
@@ -36,7 +36,7 @@ async def register_customer(customer: CustomerCreate, session: AsyncSession = De
     return db_customer
 
 @customer_router.post("/api/customers/login/")
-async def login_customer(form_data: security.OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_session)):
+async def login_customer(form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_session)):
     result = await session.execute(select(Customer).filter(Customer.email == form_data.username))
     db_customer = result.scalars().first()
     if not db_customer or not verify_password(form_data.password, db_customer.password):

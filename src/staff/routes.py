@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, status
-from fastapi.security import security
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import EmailStr
@@ -17,7 +17,7 @@ from utils.helper_func import (raise_http_exception, get_password_hash, verify_p
 staff_router = APIRouter()
 
 @staff_router.post("/api/staff/login/")
-async def login_staff(form_data: security.OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_session)):
+async def login_staff(form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_session)):
     # Check staff
     result = await session.execute(select(Staff).where(Staff.email == form_data.username))
     db_staff = result.scalars().first()

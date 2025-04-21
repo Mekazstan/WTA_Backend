@@ -5,8 +5,8 @@ from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.main import get_session
 from datetime import timedelta, datetime
-from src.config import Config
-from src.db.models import Customer, Staff, SuperAdmin
+from config import Config
+from db.models import Customer, Staff, SuperAdmin
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

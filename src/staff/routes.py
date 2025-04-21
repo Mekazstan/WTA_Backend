@@ -1,33 +1,35 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import EmailStr
+from sqlalchemy.orm import joinedload
 from typing import List
 from db.main import get_session
 from jose import JWTError, jwt
 from config import Config
 from db.models import Staff, SuperAdmin, Order, Driver, OrderStatus, Customer
-from order.schemas import OrderRead
+from order.schemas import OrderRead, OrderUpdate
 from customer.schemas import CustomerRead
+from driver.schemas import DriverUpdate
 from driver.schemas import DriverRead, DriverCreate
 from utils.helper_func import (raise_http_exception, get_password_hash, verify_password, 
                                    create_access_token, get_current_user, is_staff_or_superadmin)
 
 staff_router = APIRouter()
 
-@staff_router.post("/api/staff/login/")
+@staff_router.post("/api/admin/login/")
 async def login_staff(form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_session)):
     # Check staff
     result = await session.execute(select(Staff).where(Staff.email == form_data.username))
     db_staff = result.scalars().first()
     
-    if not db_staff or not verify_password(form_data.password, db_staff.password):
+    if not db_staff or not verify_password(form_data.password, db_staff.hashed_password):
         # Check superadmin if staff not found
         result = await session.execute(select(SuperAdmin).where(SuperAdmin.email == form_data.username))
         db_superadmin = result.scalars().first()
         
-        if not db_superadmin or not verify_password(form_data.password, db_superadmin.password):
+        if not db_superadmin or not verify_password(form_data.password, db_superadmin.hashed_password):
             raise_http_exception(status.HTTP_401_UNAUTHORIZED, "Invalid credentials")
         else:
              access_token_data = {"sub": str(db_superadmin.id), "user_type": "superadmin"}
@@ -76,7 +78,7 @@ async def confirm_staff_password_reset(new_password: str, confirm_new_password: 
         if not db_staff:
             raise_http_exception(status.HTTP_404_NOT_FOUND, "Staff not found")
         hashed_password = get_password_hash(new_password)
-        db_staff.password = hashed_password
+        db_staff.hashed_password = hashed_password
         await session.commit()
     elif user_type == "superadmin":
         result = await session.execute(select(SuperAdmin).where(SuperAdmin.id == user_id))
@@ -84,7 +86,7 @@ async def confirm_staff_password_reset(new_password: str, confirm_new_password: 
         if not db_superadmin:
             raise_http_exception(status.HTTP_404_NOT_FOUND, "SuperAdmin not found")
         hashed_password = get_password_hash(new_password)
-        db_superadmin.password = hashed_password
+        db_superadmin.hashed_password = hashed_password
         await session.commit()
 
     return {"message": "Password reset successfully"}
@@ -92,14 +94,20 @@ async def confirm_staff_password_reset(new_password: str, confirm_new_password: 
 @staff_router.get("/api/admin/orders/", response_model=List[OrderRead])
 async def get_orders(current_user: Staff = Depends(get_current_user), session: AsyncSession = Depends(get_session)):
     is_staff_or_superadmin(current_user)
-    result = await session.execute(select(Order))
+    result = await session.execute(
+        select(Order).options(joinedload(Order.customer))
+    )
     orders = result.scalars().all()
     return orders
 
 @staff_router.get("/api/admin/orders/{order_id}/", response_model=OrderRead)
 async def get_order(order_id: int, current_user: Staff = Depends(get_current_user), session: AsyncSession = Depends(get_session)):
     is_staff_or_superadmin(current_user)
-    result = await session.execute(select(Order).where(Order.id == order_id))
+    result = await session.execute(
+        select(Order)
+        .where(Order.id == order_id)
+        .options(joinedload(Order.customer))
+    )
     order = result.scalars().first()
     if not order:
         raise_http_exception(status.HTTP_404_NOT_FOUND, "Order not found")
@@ -113,7 +121,13 @@ async def assign_driver_to_order(
     session: AsyncSession = Depends(get_session),
 ):
     is_staff_or_superadmin(current_user)
-    result = await session.execute(select(Order).where(Order.id == order_id))
+    result = await session.execute(
+        select(Order)
+        .where(Order.id == order_id)
+        .options(joinedload(Order.customer))
+        .options(joinedload(Order.driver))
+        .options(joinedload(Order.staff_assigned))
+    )
     db_order = result.scalars().first()
     if not db_order:
         raise_http_exception(status.HTTP_404_NOT_FOUND, "Order not found")
@@ -137,7 +151,13 @@ async def set_driver_charge(
     session: AsyncSession = Depends(get_session),
 ):
     is_staff_or_superadmin(current_user)
-    result = await session.execute(select(Order).where(Order.id == order_id))
+    result = await session.execute(
+        select(Order)
+        .where(Order.id == order_id)
+        .options(joinedload(Order.customer))
+        .options(joinedload(Order.driver))
+        .options(joinedload(Order.staff_assigned))
+    )
     db_order = result.scalars().first()
     if not db_order:
         raise_http_exception(status.HTTP_404_NOT_FOUND, "Order not found")
@@ -151,10 +171,49 @@ async def set_driver_charge(
     await session.refresh(db_order)
     return db_order
 
+@staff_router.patch("/api/admin/orders/{order_id}/update/", response_model=OrderRead)
+async def update_order(
+    order_id: int,
+    order_update: OrderUpdate,
+    current_user: Staff = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    is_staff_or_superadmin(current_user)
+    result = await session.execute(
+        select(Order)
+        .where(Order.id == order_id)
+        .options(joinedload(Order.customer))
+        .options(joinedload(Order.driver))
+        .options(joinedload(Order.staff_assigned))
+    )
+    db_order = result.scalars().first()
+    if not db_order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+
+    update_data = order_update.model_dump(exclude_unset=True)
+
+    if update_data:
+        await session.execute(
+            update(Order)
+            .where(Order.id == order_id)
+            .values(update_data)
+        )
+        await session.commit()
+        await session.refresh(db_order)
+        return db_order
+    else:
+        return db_order
+
 @staff_router.patch("/api/admin/orders/{order_id}/dispatch/", response_model=OrderRead)
 async def dispatch_order(order_id: int, current_user: Staff = Depends(get_current_user), session: AsyncSession = Depends(get_session)):
     is_staff_or_superadmin(current_user)
-    result = await session.execute(select(Order).where(Order.id == order_id))
+    result = await session.execute(
+        select(Order)
+        .where(Order.id == order_id)
+        .options(joinedload(Order.customer))
+        .options(joinedload(Order.driver))
+        .options(joinedload(Order.staff_assigned))
+    )
     db_order = result.scalars().first()
     if not db_order:
         raise_http_exception(status.HTTP_404_NOT_FOUND, "Order not found")
@@ -172,7 +231,13 @@ async def mark_order_as_delivered(
     order_id: int, current_user: Staff = Depends(get_current_user), session: AsyncSession = Depends(get_session)
 ):
     is_staff_or_superadmin(current_user)
-    result = await session.execute(select(Order).where(Order.id == order_id))
+    result = await session.execute(
+        select(Order)
+        .where(Order.id == order_id)
+        .options(joinedload(Order.customer))
+        .options(joinedload(Order.driver))
+        .options(joinedload(Order.staff_assigned))
+    )
     db_order = result.scalars().first()
     if not db_order:
         raise_http_exception(status.HTTP_404_NOT_FOUND, "Order not found")
@@ -232,3 +297,29 @@ async def get_driver(driver_id: int, current_user: Staff = Depends(get_current_u
         raise_http_exception(status.HTTP_404_NOT_FOUND, "Driver not found")
     return driver
 
+@staff_router.patch("/api/admin/drivers/{driver_id}/update/", response_model=DriverRead)
+async def update_driver(
+    driver_id: int,
+    driver_update: DriverUpdate,
+    current_user: Staff = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    is_staff_or_superadmin(current_user)
+    result = await session.execute(select(Driver).where(Driver.id == driver_id))
+    db_driver = result.scalars().first()
+    if not db_driver:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found")
+
+    update_data = driver_update.model_dump(exclude_unset=True)
+
+    if update_data:
+        await session.execute(
+            update(Driver)
+            .where(Driver.id == driver_id)
+            .values(update_data)
+        )
+        await session.commit()
+        await session.refresh(db_driver)
+        return db_driver
+    else:
+        return db_driver

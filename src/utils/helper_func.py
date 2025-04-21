@@ -2,13 +2,14 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.main import get_session
 from datetime import timedelta, datetime
 from config import Config
 from db.models import Customer, Staff, SuperAdmin
 
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 3600
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
@@ -34,7 +35,9 @@ def raise_http_exception(status_code: int, detail: str):
     raise HTTPException(status_code=status_code, detail=detail)
 
 
-def get_current_user(token: str = Depends(oauth2_scheme), session: AsyncSession = Depends(get_session)):
+async def get_current_user(
+    token: str = Depends(oauth2_scheme), session: AsyncSession = Depends(get_session)
+):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -46,14 +49,23 @@ def get_current_user(token: str = Depends(oauth2_scheme), session: AsyncSession 
         user_type = payload.get("user_type")
         if user_id is None or user_type is None:
             raise credentials_exception
+        try:
+            user_id = int(user_id)
+        except ValueError:
+            raise credentials_exception
     except JWTError:
         raise credentials_exception
+
+    user = None
     if user_type == "customer":
-        user = session.query(Customer).filter(Customer.id == user_id).first()
+        result = await session.execute(select(Customer).where(Customer.id == user_id))
+        user = result.scalars().first()
     elif user_type == "staff":
-        user = session.query(Staff).filter(Staff.id == user_id).first()
+        result = await session.execute(select(Staff).where(Staff.id == user_id))
+        user = result.scalars().first()
     elif user_type == "superadmin":
-        user = session.query(SuperAdmin).filter(SuperAdmin.id == user_id).first()
+        result = await session.execute(select(SuperAdmin).where(SuperAdmin.id == user_id))
+        user = result.scalars().first()
     else:
         raise credentials_exception
 

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from pydantic import BaseModel
 
 class BaseSchema(BaseModel):
@@ -18,3 +19,10 @@ class DriverCreate(DriverBase):
 class DriverRead(DriverBase):
     id: int
     created_at: datetime
+    
+class DriverUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone_number: Optional[str] = None
+    vehicle_details: Optional[str] = None
+    is_active: Optional[bool] = None

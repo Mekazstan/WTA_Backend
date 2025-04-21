@@ -19,7 +19,7 @@ customer_router = APIRouter()
 
 @customer_router.post("/api/customers/register/", response_model=CustomerRead, status_code=status.HTTP_201_CREATED)
 async def register_customer(customer: CustomerCreate, session: AsyncSession = Depends(get_session)):
-    result = await session.execute(select(Customer).filter(Customer.email == customer.email))
+    result = await session.execute(select(Customer).where(Customer.email == customer.email))
     db_customer = result.scalars().first()
     if db_customer:
         await raise_http_exception(status.HTTP_400_BAD_REQUEST, "Email already registered")
@@ -28,8 +28,9 @@ async def register_customer(customer: CustomerCreate, session: AsyncSession = De
         first_name=customer.first_name,
         last_name=customer.last_name,
         email=customer.email,
-        password=hashed_password,
+        hashed_password=hashed_password,
     )
+    print("Here 3")
     session.add(db_customer)
     await session.commit()
     await session.refresh(db_customer)
@@ -37,9 +38,9 @@ async def register_customer(customer: CustomerCreate, session: AsyncSession = De
 
 @customer_router.post("/api/customers/login/")
 async def login_customer(form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_session)):
-    result = await session.execute(select(Customer).filter(Customer.email == form_data.username))
+    result = await session.execute(select(Customer).where(Customer.email == form_data.username))
     db_customer = result.scalars().first()
-    if not db_customer or not verify_password(form_data.password, db_customer.password):
+    if not db_customer or not verify_password(form_data.password, db_customer.hashed_password):
         await raise_http_exception(status.HTTP_401_UNAUTHORIZED, "Invalid credentials")
     access_token_data = {"sub": str(db_customer.id), "user_type": "customer"}
     access_token = create_access_token(access_token_data)
@@ -47,7 +48,7 @@ async def login_customer(form_data: OAuth2PasswordRequestForm = Depends(), sessi
 
 @customer_router.post("/api/customers/password/reset/request/")
 async def request_customer_password_reset(email: EmailStr, session: AsyncSession = Depends(get_session)):
-    result = await session.execute(select(Customer).filter(Customer.email == email))
+    result = await session.execute(select(Customer).where(Customer.email == email))
     db_customer = result.scalars().first()
     if not db_customer:
         await raise_http_exception(status.HTTP_404_NOT_FOUND, "Email not found")
@@ -68,12 +69,12 @@ async def confirm_customer_password_reset(new_password: str, confirm_new_passwor
             await raise_http_exception(status.HTTP_400_BAD_REQUEST, "Invalid Token")
     except JWTError:
         await raise_http_exception(status.HTTP_400_BAD_REQUEST, "Invalid token")
-    result = await session.execute(select(Customer).filter(Customer.id == user_id))
+    result = await session.execute(select(Customer).where(Customer.id == user_id))
     db_customer = result.scalars().first()
     if not db_customer:
         await raise_http_exception(status.HTTP_404_NOT_FOUND, "User not found")
     hashed_password = get_password_hash(new_password)
-    db_customer.password = hashed_password
+    db_customer.hashed_password = hashed_password
     await session.commit()
     return {"message": "Password reset successfully"}
 
@@ -96,7 +97,7 @@ async def get_customer_orders(current_customer: Customer = Depends(get_current_u
     if not isinstance(current_customer, Customer):
         await raise_http_exception(status.HTTP_403_FORBIDDEN, "Customers can only view their own orders.")
     result = await session.execute(
-        select(Order).filter(Order.customer_id == current_customer.id)
+        select(Order).where(Order.customer_id == current_customer.id)
     )
     orders = result.scalars().all()
     return orders
@@ -107,7 +108,7 @@ async def get_customer_order(order_id: int, current_customer: Customer = Depends
         await raise_http_exception(status.HTTP_403_FORBIDDEN, "Customers can only view their own order.")
     result = await session.execute(
         select(Order)
-        .filter(Order.id == order_id, Order.customer_id == current_customer.id)
+        .where(Order.id == order_id, Order.customer_id == current_customer.id)
     )
     order = result.scalars().first()
     if not order:
@@ -120,7 +121,7 @@ async def cancel_order(order_id: int, current_customer: Customer = Depends(get_c
         await raise_http_exception(status.HTTP_403_FORBIDDEN, "Customers can only cancel their own orders.")
     result = await session.execute(
         select(Order)
-        .filter(Order.id == order_id, Order.customer_id == current_customer.id)
+        .where(Order.id == order_id, Order.customer_id == current_customer.id)
     )
     db_order = result.scalars().first()
     if not db_order:
@@ -162,7 +163,7 @@ async def get_customer_recyclable_submissions(
     if not isinstance(current_customer, Customer):
         await raise_http_exception(status.HTTP_403_FORBIDDEN, "Customers can only view their own recyclable submissions.")
     result = await session.execute(
-        select(RecyclableSubmission).filter(RecyclableSubmission.customer_id == current_customer.id)
+        select(RecyclableSubmission).where(RecyclableSubmission.customer_id == current_customer.id)
     )
     submissions = result.scalars().all()
     return submissions
@@ -177,7 +178,7 @@ async def get_customer_recyclable_submission(
         await raise_http_exception(status.HTTP_403_FORBIDDEN, "Customers can only view their own recyclable submission.")
     result = await session.execute(
         select(RecyclableSubmission)
-        .filter(RecyclableSubmission.id == submission_id, RecyclableSubmission.customer_id == current_customer.id)
+        .where(RecyclableSubmission.id == submission_id, RecyclableSubmission.customer_id == current_customer.id)
     )
     submission = result.scalars().first()
     if not submission:
@@ -195,7 +196,7 @@ async def accept_driver_charge(
     """
     result = await session.execute(
         select(Order)
-        .filter(Order.id == order_id, Order.customer_id == current_customer.id)
+        .where(Order.id == order_id, Order.customer_id == current_customer.id)
     )
     db_order = result.scalars().first()
     if not db_order:

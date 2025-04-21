@@ -13,7 +13,6 @@ class StaffBase(BaseSchema):
 
 class StaffCreate(StaffBase):
     password: str
-    created_by_id: Optional[int]
 
 class StaffRead(StaffBase):
     id: int

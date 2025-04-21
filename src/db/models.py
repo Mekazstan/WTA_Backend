@@ -37,7 +37,7 @@ class Customer(Base):
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
-    password = Column(String, nullable=False)
+    hashed_password = Column(String, nullable=False)
     registration_date = Column(DateTime, default=datetime.utcnow)
     orders = relationship("Order", back_populates="customer", cascade="all, delete-orphan")
     recyclable_submissions = relationship("RecyclableSubmission", back_populates="customer", cascade="all, delete-orphan")
@@ -79,7 +79,7 @@ class Staff(Base):
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
-    password = Column(String, nullable=False)
+    hashed_password = Column(String, nullable=False)
     created_by_id = Column(Integer, ForeignKey("staff.id"), nullable=True)
     created_by = relationship("Staff", remote_side=[id])
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -89,7 +89,7 @@ class SuperAdmin(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, nullable=False)
-    password = Column(String, nullable=False)
+    hashed_password = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class RecyclableSubmission(Base):

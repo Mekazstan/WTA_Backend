@@ -16,7 +16,6 @@ class RecyclableSubmissionBase(BaseSchema):
     status: RecyclableStatus = RecyclableStatus.PENDING_REVIEW
 
 class RecyclableSubmissionCreate(RecyclableSubmissionBase):
-    customer_id: int
     image_url: str
 
 class RecyclableSubmissionRead(RecyclableSubmissionBase):

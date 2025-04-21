@@ -14,7 +14,7 @@ class OrderBase(BaseSchema):
     status: OrderStatus = OrderStatus.PAIRING
 
 class OrderCreate(OrderBase):
-    customer_id: int
+    pass
 
 class OrderRead(OrderBase):
     id: int
@@ -27,8 +27,11 @@ class OrderRead(OrderBase):
     payment_status: PaymentStatus
     payment_date: Optional[datetime]
 
-class OrderUpdate(BaseSchema):
-    status: OrderStatus
-    driver_id: Optional[int]
-    staff_assigned_id: Optional[int]
-    driver_charge: Optional[float]
+class OrderUpdate(BaseModel):
+    destination_address: Optional[str] = None
+    water_amount: Optional[float] = None
+    status: Optional[OrderStatus] = None
+    driver_id: Optional[int] = None
+    driver_charge: Optional[float] = None
+    payment_status: Optional[PaymentStatus] = None
+    payment_date: Optional[datetime] = None

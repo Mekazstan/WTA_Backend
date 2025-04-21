@@ -24,7 +24,7 @@ async def create_super_admin():
             email = Config.ADMIN_EMAIL
             password = Config.ADMIN_PASSWORD
             hashed_password = get_password_hash(password)
-            superadmin = SuperAdmin(email=email, password=hashed_password)
+            superadmin = SuperAdmin(email=email, hashed_password=hashed_password)
             db.add(superadmin)
             await db.commit()
             print("SuperAdmin created.")
@@ -33,7 +33,7 @@ async def create_super_admin():
 async def life_span(app: FastAPI):
     print(f"Server is starting...")
     await init_db()
-    await create_super_admin()
+    # await create_super_admin()
     yield
     print(f"Server has been stopped")
 
@@ -56,7 +56,7 @@ app.add_middleware(
 )
 
 app.include_router(customer_router, tags=["Customers"])
-app.include_router(staff_router, tags=["Drivers"])
+app.include_router(staff_router, tags=["Staff"])
 app.include_router(admin_router, tags=["Admin"])
 
 

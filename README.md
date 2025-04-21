@@ -52,82 +52,46 @@ This repository contains the backend implementation for the Water Tanker Availab
 
 ## API Endpoints
 
-The backend exposes the following API endpoints:
+This section details all the available API endpoints.
 
-### Customer Authentication:
+**Customers**
 
-* `POST /api/customers/register`: For new customer registration.
-* `POST /api/customers/login`: For customer login and session management.
-* `GET /api/customers/refresh_token`: To refresh the access token using a valid refresh token.
-* `GET /api/customers/logout`: To revoke the current access token (logout).
+* **`POST /api/customers/register/`**: Registers a new customer.
+* **`POST /api/customers/login/`**: Logs in an existing customer and returns an access token.
+* **`POST /api/customers/password/reset/request/`**: Requests a password reset link to be sent to the customer's email.
+* **`POST /api/customers/password/reset/confirm/`**: Confirms a password reset using a token received via email.
+* **`POST /api/customers/orders/`**: Creates a new order for the authenticated customer.
+* **`GET /api/customers/orders/`**: Retrieves a list of orders for the authenticated customer.
+* **`GET /api/customers/orders/{order_id}/`**: Retrieves details of a specific order for the authenticated customer.
+* **`PATCH /api/customers/orders/{order_id}/cancel/`**: Cancels a specific order for the authenticated customer, if it's in the appropriate status.
+* **`POST /api/customers/recyclables/`**: Creates a new recyclable submission for the authenticated customer.
+* **`GET /api/customers/recyclables/`**: Retrieves a list of recyclable submissions for the authenticated customer.
+* **`GET /api/customers/recyclables/{submission_id}/`**: Retrieves details of a specific recyclable submission for the authenticated customer.
+* **`POST /api/customers/orders/{order_id}/accept-charge/`**: Accepts the driver's charge for a specific order and proceeds with payment.
 
-### Customer Profile Management:
+**Super Admin**
 
-* `GET /api/customers/profile`: To retrieve customer profile details (requires authentication).
-* `PATCH /api/customers/profile`: To update customer profile details (requires authentication).
-* `GET /api/customers/orders`: To retrieve the logged-in customer's order history (requires authentication).
+* **`POST /api/superadmin/staff/`**: Creates a new staff member (requires superadmin authentication).
+* **`GET /api/superadmin/staff/`**: Retrieves a list of all staff members (requires superadmin authentication).
+* **`GET /api/superadmin/staff/{staff_id}/`**: Retrieves details of a specific staff member (requires superadmin authentication).
+* **`PATCH /api/superadmin/staff/{staff_id}/update/`**: Updates details of a specific staff member (requires superadmin authentication).
 
-### Order Management (Customer Side):
+**Staff & Super Admin**
 
-* `POST /api/orders`: To place a new order (requires customer authentication).
-
-### Payment Integration:
-
-* `POST /api/payments`: To initiate a payment (requires authentication, details depend on the payment gateway).
-* `GET /api/payments/{payment_id}`: To retrieve payment details (requires authentication).
-    * **Note:** Endpoints for verifying payment status (e.g., from a webhook) might be added depending on the payment gateway.
-
-### Feedback and Ratings:
-
-* `POST /api/feedback/{order_id}`: To submit feedback and a rating for a completed order (requires customer authentication).
-
-### Driver Authentication:
-
-* `POST /api/drivers/register`: For new driver registration.
-* `POST /api/drivers/login`: For driver login and session management.
-* `GET /api/drivers/refresh_token`: To refresh the driver's access token.
-* `GET /api/drivers/logout`: To revoke the driver's access token (logout).
-
-### Driver Profile Management:
-
-* `GET /api/drivers/profile`: To retrieve driver profile details (requires driver authentication).
-* `PATCH /api/drivers/profile`: To update driver profile details (requires driver authentication).
-
-### Admin Authentication:
-
-* `POST /api/admin/signup`: For new admin user registration.
-* `POST /api/admin/login`: For admin login and session management.
-* `GET /api/admin/refresh_token`: To refresh the admin's access token.
-* `GET /api/admin/logout`: To revoke the admin's access token (logout).
-
-### Admin User Management:
-
-* `GET /api/admin/customers`: To list all customers (requires admin authentication).
-* `GET /api/admin/customers/{customer_id}`: To retrieve details of a specific customer (requires admin authentication).
-* `POST /api/admin/customers`: To add a new customer (requires admin authentication).
-* `PATCH /api/admin/customers/{customer_id}`: To update customer details (requires admin authentication).
-* `DELETE /api/admin/customers/{customer_id}`: To deactivate a customer account (requires admin authentication).
-
-### Admin Driver Management:
-
-* `GET /api/admin/drivers`: To list all drivers (requires admin authentication).
-* `GET /api/admin/drivers/{driver_id}`: To retrieve details of a specific driver (requires admin authentication).
-* `POST /api/admin/drivers`: To add a new driver (requires admin authentication).
-* `PATCH /api/admin/drivers/{driver_id}`: To update driver information (requires admin authentication).
-* `DELETE /api/admin/drivers/{driver_id}`: To deactivate a driver (requires admin authentication).
-
-### Admin Order Management:
-
-* `GET /api/admin/orders`: To list all orders (requires admin authentication).
-* `GET /api/admin/orders/{order_id}`: To retrieve details of a specific order (requires admin authentication).
-* `PATCH /api/admin/orders/{order_id}/assign`: To manually assign an order to a driver (requires admin authentication).
-* `PATCH /api/admin/orders/{order_id}/status`: To manually update the delivery status of an order (requires admin authentication).
-
-### Admin Reporting:
-
-* `GET /api/admin/reports/orders`: To generate reports on order statistics (requires admin authentication).
-* `GET /api/admin/reports/revenue`: To generate revenue reports (requires admin authentication).
-* `GET /api/admin/reports/feedback`: To retrieve feedback trends (requires admin authentication).
+* **`POST /api/staff/login/`**: Logs in a staff member or a superadmin and returns an access token, along with the user type.
+* **`POST /api/admin/password/reset/request/`**: Requests a password reset link for a staff member or superadmin.
+* **`POST /api/admin/password/reset/confirm/`**: Confirms a password reset for a staff member or superadmin using a token.
+* **`GET /api/admin/orders/`**: Retrieves a list of all orders (requires staff or superadmin authentication).
+* **`GET /api/admin/orders/{order_id}/`**: Retrieves details of a specific order (requires staff or superadmin authentication).
+* **`PATCH /api/admin/orders/{order_id}/assign-driver/`**: Assigns a driver to a specific order (requires staff or superadmin authentication).
+* **`PATCH /api/admin/orders/{order_id}/set-charge/`**: Sets the driver's charge for a specific order (requires staff or superadmin authentication).
+* **`PATCH /api/admin/orders/{order_id}/dispatch/`**: Marks a specific order as dispatched (requires staff or superadmin authentication).
+* **`PATCH /api/admin/orders/{order_id}/delivered/`**: Marks a specific order as delivered (requires staff or superadmin authentication).
+* **`GET /api/admin/customers/`**: Retrieves a list of all customers (requires staff or superadmin authentication).
+* **`GET /api/admin/customers/{customer_id}/`**: Retrieves details of a specific customer (requires staff or superadmin authentication).
+* **`POST /api/admin/drivers/`**: Creates a new driver (requires staff or superadmin authentication).
+* **`GET /api/admin/drivers/`**: Retrieves a list of all drivers (requires staff or superadmin authentication).
+* **`GET /api/admin/drivers/{driver_id}/`**: Retrieves details of a specific driver (requires staff or superadmin authentication).
 
 
 ## Data Models
@@ -135,9 +99,9 @@ The backend exposes the following API endpoints:
 The backend utilizes the following data models (corresponding to database tables):
 
 * `Customer`
-* `Driver`
 * `Order`
-* `Payment`
-* `Feedback`
-* `AdminUser`
+* `Driver`
+* `Staff`
+* `SuperAdmin`
+* `RecyclableSubmission`
 

@@ -1,96 +1,109 @@
-import uuid
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy import (Column, Integer, String, DateTime, ForeignKey, 
-                        Numeric, Text, Boolean, Float)
+from datetime import datetime
+from sqlalchemy import (Column, Integer, String, DateTime, 
+                        ForeignKey, Enum, Numeric, Boolean)
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
-from sqlalchemy.dialects.postgresql import UUID
+from enum import Enum as PyEnum
 from .main import Base
+
+
+class OrderStatus(str, PyEnum):
+    PAIRING = "pairing"
+    PENDING_PAYMENT = "pending_payment"
+    EN_ROUTE = "en_route"
+    DELIVERED = "delivered"
+    CANCELLED = "cancelled"
+
+
+class RecyclableStatus(str, PyEnum):
+    PENDING_REVIEW = "pending_review"
+    PICKUP_SCHEDULED = "pickup_scheduled"
+    DROPPED_OFF = "dropped_off"
+    CREDITED = "credited"
+
+
+class PickupOption(str, PyEnum):
+    PICKUP = "pickup"
+    DROPOFF = "dropoff"
+    
+class PaymentStatus(str, PyEnum):
+    PENDING = "pending"
+    PAID = "paid"
+
 
 class Customer(Base):
     __tablename__ = "customers"
 
-    customer_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    email = Column(String(255), unique=True, nullable=False)
-    password_hash = Column(String(255), nullable=False)
-    first_name = Column(String(100), nullable=False)
-    last_name = Column(String(100), nullable=False)
-    address = Column(Text)
-    contact_number = Column(String(20), unique=True)
-    registration_date = Column(DateTime(timezone=True), default=func.now())
-
-    orders = relationship("Order", back_populates="customer")
-    feedback = relationship("Feedback", back_populates="customer")
-
-class Driver(Base):
-    __tablename__ = "drivers"
-
-    driver_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String(255), nullable=False)
-    contact_number = Column(String(20), unique=True, nullable=False)
-    vehicle_details = Column(JSONB)
-    verification_status = Column(String(50), default="Pending")
-    registration_date = Column(DateTime(timezone=True), default=func.now())
-    price_per_liter = Column(Float, default=20.0)
-    is_active = Column(Boolean, default=True)
-    password_hash = Column(String(255))
-    
-    orders = relationship("Order", back_populates="assigned_driver")
+    id = Column(Integer, primary_key=True, index=True)
+    first_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=False)
+    email = Column(String, unique=True, nullable=False)
+    password = Column(String, nullable=False),
+    registration_date = Column(DateTime, default=datetime.utcnow)
+    orders = relationship("Order", back_populates="customer", cascade="all, delete-orphan")
+    recyclable_submissions = relationship("RecyclableSubmission", back_populates="customer", cascade="all, delete-orphan")
 
 class Order(Base):
     __tablename__ = "orders"
 
-    order_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.customer_id"), nullable=False)
-    quantity = Column(Numeric, nullable=False)
-    location_address = Column(String(200))
-    delivery_schedule = Column(DateTime(timezone=True), nullable=False)
-    order_date = Column(DateTime(timezone=True), default=func.now())
-    delivery_status = Column(String(50), default="Pending")
-    assigned_driver_id = Column(UUID(as_uuid=True), ForeignKey("drivers.driver_id"), nullable=True)
-    payment_status = Column(String(50), default="Pending")
-    payment_method = Column(String(50))
-    cancellation_reason = Column(String(255), nullable=True)
-    created_at = Column(DateTime(timezone=True), default=func.now())
-    updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
-
+    id = Column(Integer, primary_key=True, index=True)
+    customer_id = Column(Integer, ForeignKey("customers.id", ondelete="CASCADE"), nullable=False)
     customer = relationship("Customer", back_populates="orders")
-    assigned_driver = relationship("Driver", back_populates="orders")
-    payments = relationship("Payment", back_populates="order")
-    feedback = relationship("Feedback", back_populates="order")
+    destination_address = Column(String, nullable=False)
+    water_amount = Column(Numeric(10, 2), nullable=False)
+    status = Column(Enum(OrderStatus), default=OrderStatus.PAIRING)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    driver_id = Column(Integer, ForeignKey("drivers.id"), nullable=True)
+    driver = relationship("Driver")
+    staff_assigned_id = Column(Integer, ForeignKey("staff.id"), nullable=True)
+    staff_assigned = relationship("Staff")
+    driver_charge = Column(Numeric(10, 2), nullable=True)
+    payment_status = Column(Enum(PaymentStatus), default=PaymentStatus.PENDING)
+    payment_date = Column(DateTime, nullable=True)
 
-class Payment(Base):
-    __tablename__ = "payments"
+class Driver(Base):
+    __tablename__ = "drivers"
 
-    payment_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    order_id = Column(UUID(as_uuid=True), ForeignKey("orders.order_id"), nullable=False)
-    amount = Column(Numeric, nullable=False)
-    payment_date = Column(DateTime(timezone=True), default=func.now())
-    transaction_id = Column(String(255), unique=True)
-    status = Column(String(50))
+    id = Column(Integer, primary_key=True, index=True)
+    first_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=False)
+    phone_number = Column(String, nullable=False)
+    vehicle_details = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
-    order = relationship("Order", back_populates="payments")
+class Staff(Base):
+    __tablename__ = "staff"
 
-class Feedback(Base):
-    __tablename__ = "feedback"
+    id = Column(Integer, primary_key=True, index=True)
+    first_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=False)
+    email = Column(String, unique=True, nullable=False)
+    password = Column(String, nullable=False)
+    created_by_id = Column(Integer, ForeignKey("staff.id"), nullable=True)
+    created_by = relationship("Staff", remote_side=[id])
+    created_at = Column(DateTime, default=datetime.utcnow)
 
-    feedback_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    order_id = Column(UUID(as_uuid=True), ForeignKey("orders.order_id"), nullable=False)
-    customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.customer_id"), nullable=False)
-    rating = Column(Integer, nullable=False)
-    comment = Column(Text)
-    feedback_date = Column(DateTime(timezone=True), default=func.now())
+class SuperAdmin(Base):
+    __tablename__ = "super_admins"
 
-    order = relationship("Order", back_populates="feedback")
-    customer = relationship("Customer", back_populates="feedback")
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, nullable=False)
+    password = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
-class AdminUser(Base):
-    __tablename__ = "admin_users"
+class RecyclableSubmission(Base):
+    __tablename__ = "recyclable_submissions"
 
-    admin_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    username = Column(String(100), unique=True, nullable=False)
-    password_hash = Column(String(255), nullable=False)
-    email = Column(String(255), unique=True, nullable=False)
-    created_at = Column(DateTime(timezone=True), default=func.now())
-
-    
+    id = Column(Integer, primary_key=True, index=True)
+    customer_id = Column(Integer, ForeignKey("customers.id", ondelete="CASCADE"), nullable=False)
+    customer = relationship("Customer", back_populates="recyclable_submissions")
+    image_url = Column(String, nullable=False)
+    recyclable_type = Column(String, nullable=False)
+    estimated_value = Column(Numeric(10, 2), nullable=True)
+    pickup_option = Column(Enum(PickupOption), nullable=False)
+    pickup_address = Column(String, nullable=True)
+    dropoff_location = Column(String, nullable=True)
+    status = Column(Enum(RecyclableStatus), default=RecyclableStatus.PENDING_REVIEW)
+    credited_amount = Column(Numeric(10, 2), nullable=True)
+    submission_date = Column(DateTime, default=datetime.utcnow)

@@ -1,55 +1,20 @@
-from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional
-from uuid import UUID
+from pydantic import BaseModel
 
-class VehicleDetails(BaseModel):
-    make: str
-    model: str
-    plate_number: str
-    
-class DriverBase(BaseModel):
-    name: str = Field(..., example="Tanker Driver 1")
-    contact_number: str = Field(..., example="+9876543210")
-    vehicle_details: Optional[VehicleDetails] = None
-    verification_status: Optional[str] = Field("Pending", example="Verified")
-    price_per_liter: float = 20.0
-    
+class BaseSchema(BaseModel):
     class Config:
         from_attributes = True
+
+class DriverBase(BaseSchema):
+    first_name: str
+    last_name: str
+    phone_number: str
+    vehicle_details: str
+    is_active: bool
 
 class DriverCreate(DriverBase):
-    password: str = Field(..., min_length=6, example="driverpassword")
-    
-    class Config:
-        from_attributes = True
+    pass
 
-class DriverLogin(BaseModel):
-    contact_number: str = Field(..., example="+9876543210")
-    password: str = Field(..., example="driverpassword")
-    
-    class Config:
-        from_attributes = True
-
-class DriverUpdate(DriverBase):
-    name: Optional[str] = Field(None, example="Updated Driver Name")
-    contact_number: Optional[str] = Field(None, example="+1122334455")
-    vehicle_details: Optional[VehicleDetails] = None
-    verification_status: Optional[str] = None
-    price_per_liter: Optional[float] = None
-    
-    class Config:
-        from_attributes = True
-
-class DriverResponse(DriverBase):
-    driver_id: UUID
-    registration_date: datetime
-    is_active: bool
-    vehicle_details: Optional[VehicleDetails] = None
-
-    class Config:
-        from_attributes = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-            UUID: lambda v: str(v),
-        }
+class DriverRead(DriverBase):
+    id: int
+    created_at: datetime

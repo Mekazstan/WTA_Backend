@@ -1,18 +1,17 @@
-from pydantic import BaseModel, Field
 from datetime import datetime
-from uuid import UUID
+from pydantic import BaseModel, EmailStr
 
-class AdminUserBase(BaseModel):
-    username: str = Field(..., example="adminuser")
-    email: str = Field(..., example="admin@example.com")
-    password: str = Field(..., min_length=6, example="adminpassword")
-    
+class BaseSchema(BaseModel):
     class Config:
         from_attributes = True
 
-class AdminUserCreate(AdminUserBase):
-    pass
+class SuperAdminBase(BaseSchema):
+    email: EmailStr
 
-class AdminUserLogin(AdminUserBase):
-    pass
+class SuperAdminCreate(SuperAdminBase):
+    password: str
+
+class SuperAdminRead(SuperAdminBase):
+    id: int
+    created_at: datetime
 

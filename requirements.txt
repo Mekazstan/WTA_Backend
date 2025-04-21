@@ -1,10 +1,13 @@
 asyncpg
 fastapi[standard]
+httpx
 itsdangerous
 motor
-passlib[bcrypt]
+passlib
+python-jose
 pydantic
 pydantic-settings
 pytest
 pyjwt
 sqlalchemy
+

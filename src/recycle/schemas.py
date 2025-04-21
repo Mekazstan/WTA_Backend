@@ -1,8 +1,8 @@
 from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel
-from src.customer.schemas import CustomerRead
-from src.db.models import RecyclableStatus, PickupOption
+from customer.schemas import CustomerRead
+from db.models import RecyclableStatus, PickupOption
 
 class BaseSchema(BaseModel):
     class Config:

@@ -1,8 +1,8 @@
 from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel
-from src.db.models import OrderStatus, PaymentStatus
-from src.customer.schemas import CustomerRead
+from db.models import OrderStatus, PaymentStatus
+from customer.schemas import CustomerRead
 
 class BaseSchema(BaseModel):
     class Config:

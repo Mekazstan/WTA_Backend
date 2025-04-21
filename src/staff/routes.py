@@ -6,12 +6,12 @@ from pydantic import EmailStr
 from typing import List
 from db.main import get_session
 from jose import JWTError, jwt
-from src.config import Config
-from src.db.models import Staff, SuperAdmin, Order, Driver, OrderStatus, Customer
-from src.order.schemas import OrderRead
-from src.customer.schemas import CustomerRead
-from src.driver.schemas import DriverRead, DriverCreate
-from src.utils.helper_func import (raise_http_exception, get_password_hash, verify_password, 
+from config import Config
+from db.models import Staff, SuperAdmin, Order, Driver, OrderStatus, Customer
+from order.schemas import OrderRead
+from customer.schemas import CustomerRead
+from driver.schemas import DriverRead, DriverCreate
+from utils.helper_func import (raise_http_exception, get_password_hash, verify_password, 
                                    create_access_token, get_current_user, is_staff_or_superadmin)
 
 staff_router = APIRouter()

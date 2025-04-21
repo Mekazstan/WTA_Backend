@@ -7,11 +7,11 @@ from typing import List
 from datetime import datetime
 from db.main import get_session
 from jose import JWTError, jwt
-from src.config import Config
-from src.db.models import Customer, Order, OrderStatus, RecyclableSubmission, PaymentStatus
-from src.order.schemas import OrderRead, OrderCreate
-from src.recycle.schemas import RecyclableSubmissionRead, RecyclableSubmissionCreate
-from src.utils.helper_func import (raise_http_exception, get_password_hash, verify_password, 
+from config import Config
+from db.models import Customer, Order, OrderStatus, RecyclableSubmission, PaymentStatus
+from order.schemas import OrderRead, OrderCreate
+from recycle.schemas import RecyclableSubmissionRead, RecyclableSubmissionCreate
+from utils.helper_func import (raise_http_exception, get_password_hash, verify_password, 
                                    create_access_token, get_current_user)
 from .schemas import CustomerRead, CustomerCreate
 

@@ -3,9 +3,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.main import get_session
 from typing import List
-from src.db.models import Staff, SuperAdmin
-from src.staff.schemas import StaffRead, StaffCreate
-from src.utils.helper_func import (raise_http_exception, get_password_hash,
+from db.models import Staff, SuperAdmin
+from staff.schemas import StaffRead, StaffCreate
+from utils.helper_func import (raise_http_exception, get_password_hash,
                                    get_current_user, is_superadmin)
 
 admin_router = APIRouter()
